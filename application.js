@@ -6,6 +6,33 @@ function OAuth2(){
   var _redirectUri = "urn:ietf:wg:oauth:2.0:oob";
   var _this = this;
 
+  this.injectOnPage = function(){
+    this.updateUiState();
+    $("#startAuth").on("click", function(){
+      _this.startAuth();
+    });
+  };
+
+  this.isAuthorized = function(){
+    var a = _authCode;
+    var b = !(_authCode === undefined);
+    var c = _accessToken;
+    var d = !(_accessToken === undefined);
+    return a && b && c && d;
+  };
+
+  this.updateUiState = function(){
+    if(_this.isAuthorized()){
+      $("#authorization").hide();
+      $("#main").show();
+      $("#main #info").append("_authCode: " + _authCode + " _accessToken: " + _accessToken);
+    } else {
+      $("#authorization").show();
+      $("#main").hide();
+    }
+  };
+
+
   this.startAuth = function(){
     _authWindow = window.open("XXX", "Google", "height=600,width=400");
     _this.listenForAuthCode();
@@ -14,16 +41,12 @@ function OAuth2(){
   this.listenForAuthCode = function(){
     $("form#authCode input:submit").removeAttr("disabled");
     $("form#authCode").on("submit", function(event){
-      _authCode = $(this).find("input:text").val();
       event.preventDefault();
-      _this.authCodeSet();
+      _authCode = $(this).find("input:text").val();
+      localStorage["auth_code"] = _authCode;
+      _this.getRefreshAndAccessTokens();
       return false;
     });
-  };
-
-  this.authCodeSet = function(){
-    $("#authorization").hide();
-    _this.getRefreshAndAccessTokens();
   };
 
   this.getRefreshAndAccessTokens = function(){
@@ -34,12 +57,15 @@ function OAuth2(){
       redirect_uri: _redirectUri,
       grant_type: "authorization_code"
     };
-    console.log("Posting with " + _authCode);
     $.ajax({
       type: "POST",
       url: "https://accounts.google.com/o/oauth2/token",
       data: _data,
-      success: function(data){console.log(data);},
+      success: function(data){
+        _accessToken = JSON.parse(data).access_token;
+        localStorage["access_token"] = _accessToken;
+        _this.updateUiState();
+      },
       dataType: "text"
     });
   };
@@ -48,7 +74,5 @@ function OAuth2(){
 
 $(function(){
   var oauth = new OAuth2();
-  $("#startAuth").on("click", function(){
-    oauth.startAuth();
-  });
+  oauth.injectOnPage();
 });
