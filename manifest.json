@@ -9,7 +9,8 @@
     }
   },
   "permissions": [
-    "https://accounts.google.com/o/oauth2/token"
+    "https://accounts.google.com/o/oauth2/token",
+    "https://www.googleapis.com/*"
   ],
   "icons": { "16": "icon-16.png", "128": "icon-128.png" }
 }

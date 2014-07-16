@@ -26,10 +26,21 @@ function OAuth2(){
       $("#authorization").hide();
       $("#main").show();
       $("#main #info").append("_authCode: " + _authCode + " _accessToken: " + _accessToken);
+      _this.getLists();
     } else {
       $("#authorization").show();
       $("#main").hide();
     }
+  };
+
+  this.getLists = function(){
+    $.ajax({
+      type: "GET",
+      url: "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true&access_token="+_accessToken,
+      success: function(data){
+        console.log(data)
+      }
+    });
   };
 
 
