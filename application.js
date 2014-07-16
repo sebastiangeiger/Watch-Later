@@ -36,9 +36,13 @@ function OAuth2(){
   this.getLists = function(){
     $.ajax({
       type: "GET",
-      url: "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true&access_token="+_accessToken,
+      url: "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token="+_accessToken,
       success: function(data){
-        console.log(data)
+        console.log(data);
+        console.log(data.items[0].contentDetails.relatedPlaylists.watchLater);
+      },
+      error: function(){
+        alert("ERROR!");
       }
     });
   };
