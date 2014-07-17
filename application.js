@@ -1,9 +1,10 @@
 function OAuth2(){
-  var _authWindow;
-  var _authCode;
+  var _authCode = localStorage["auth_code"];
+  var _accessToken = localStorage["access_token"];
   var _clientId = "XXX";
   var _clientSecret = "XXX";
   var _redirectUri = "urn:ietf:wg:oauth:2.0:oob";
+  var _watchLaterId;
   var _this = this;
 
   this.injectOnPage = function(){
@@ -38,8 +39,28 @@ function OAuth2(){
       type: "GET",
       url: "https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token="+_accessToken,
       success: function(data){
-        console.log(data);
-        console.log(data.items[0].contentDetails.relatedPlaylists.watchLater);
+        _watchLaterId = data.items[0].contentDetails.relatedPlaylists.watchLater;
+        _this.getWatchLaterContents();
+      },
+      error: function(){
+        alert("ERROR!");
+      }
+    });
+
+  };
+
+  this.getWatchLaterContents = function(){
+    $.ajax({
+      type: "GET",
+      url: "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+_watchLaterId+"&access_token="+_accessToken,
+      success: function(data){
+        var videos = data.items;
+        var titles = videos.map(function(video){
+          return video.snippet.title;
+        });
+        titles.forEach(function(title) {
+          $("#titles").append("<li>"+title+"</li>");
+        });
       },
       error: function(){
         alert("ERROR!");
@@ -49,7 +70,7 @@ function OAuth2(){
 
 
   this.startAuth = function(){
-    _authWindow = window.open("XXX", "Google", "height=600,width=400");
+    window.open("https://accounts.google.com/o/oauth2/auth?client_id="+_clientId+"&redirect_uri=urn:ietf:wg:oauth:2.0:oob&scope=https://www.googleapis.com/auth/youtube&response_type=code", "Google", "height=600,width=400");
     _this.listenForAuthCode();
   };
 
