@@ -3,20 +3,28 @@ var AuthorizationState = Backbone.Model.extend({
     authCode: null,
     accessToken: null,
     refreshToken: null,
-    expiresIn: null
+    expiresOn: null,
+    state: 0
   },
 
   initialize: function(){
     this.loadFromLocalStorage();
-    if(!this.isAuthorized()) {
-      console.log("need to authorize");
+    console.log("State is: " + this.get("state"));
+    this.PossibleStates = {
+      AUTH_CODE_NEEDED: 0,
+      FULLY_AUTHORIZED: 1,
+      ACCESS_TOKEN_EXPIRED: 2
     }
   },
 
   loadFromLocalStorage: function(){
     this.setAccessToken (localStorage["authorizationState.accessToken"]);
     this.setRefreshToken(localStorage["authorizationState.refreshToken"]);
-    this.setExpiresIn   (localStorage["authorizationState.expiresIn"]);
+    this._setExpiresOn  (localStorage["authorizationState.expiresOn"]);
+  },
+
+  needsAuthCode: function(){
+    return this.get("state") === this.PossibleStates.AUTH_CODE_NEEDED;
   },
 
   isAuthorized: function(){
@@ -38,8 +46,12 @@ var AuthorizationState = Backbone.Model.extend({
     this._protectedSet("refreshToken", newValue);
   },
 
+  _setExpiresOn: function(newValue){
+    this._protectedSet("expiresOn", newValue);
+  },
+
   setExpiresIn: function(newValue){
-    this._protectedSet("expiresIn", newValue);
+    this._setExpiresOn(Date.now() + newValue);
   },
 
   _protectedSet: function(attribute, newValue){
@@ -75,12 +87,12 @@ function OAuthHandler(state) {
   };
 
   this.updateUiState = function(){
-    if(state.isAuthorized()){
-      $("#authorization").hide();
-      $("#main").show();
-    } else {
+    if(state.needsAuthCode()){
       $("#authorization").show();
       $("#main").hide();
+    } else {
+      $("#authorization").hide();
+      $("#main").show();
     }
   };
 
