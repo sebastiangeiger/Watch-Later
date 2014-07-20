@@ -8,27 +8,45 @@ var AuthorizationState = Backbone.Model.extend({
   },
 
   initialize: function(){
-    this.loadFromLocalStorage();
-    console.log("State is: " + this.get("state"));
     this.PossibleStates = {
       AUTH_CODE_NEEDED: 0,
       FULLY_AUTHORIZED: 1,
       ACCESS_TOKEN_EXPIRED: 2
     }
+    this._loadFromLocalStorage();
+    this.updateState();
+    console.log("State is: " + this.get("state"));
   },
 
-  loadFromLocalStorage: function(){
+  _loadFromLocalStorage: function(){
     this.setAccessToken (localStorage["authorizationState.accessToken"]);
     this.setRefreshToken(localStorage["authorizationState.refreshToken"]);
-    this._setExpiresOn  (localStorage["authorizationState.expiresOn"]);
+    this._setExpiresOn  (parseInt(localStorage["authorizationState.expiresOn"],10));
+  },
+
+  updateState: function(){
+    var newState;
+    if(this.has("accessToken") && !this._isExpired()){
+      newState = this.PossibleStates.FULLY_AUTHORIZED;
+    } else if(this._isExpired() && this.has("refreshToken")) {
+      newState = this.PossibleStates.ACCESS_TOKEN_EXPIRED;
+    } else {
+      newState = this.PossibleStates.AUTH_CODE_NEEDED;
+    }
+    this.set({state: newState});
+  },
+
+  _isExpired: function(){
+    return Date.now() > this.get("expiresOn");
+  },
+
+  has: function(property){
+    var value = this.get(property);
+    return value !== undefined && value !== null;
   },
 
   needsAuthCode: function(){
     return this.get("state") === this.PossibleStates.AUTH_CODE_NEEDED;
-  },
-
-  isAuthorized: function(){
-    return this.get("accessToken") !== null
   },
 
   setAuthCode: function(newValue){
