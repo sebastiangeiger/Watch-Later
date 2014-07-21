@@ -40,6 +40,25 @@ var AuthorizationState = Backbone.Model.extend({
     return Date.now() > this.get("expiresOn");
   },
 
+  isFullyAuthorized: function(){
+    return this.get("state") === this.PossibleStates.FULLY_AUTHORIZED;
+  },
+
+  whenFullyAuthorized: function(){
+    var _this = this;
+    return new Promise(function(resolve, reject){
+      if(_this.isFullyAuthorized()){
+        resolve();
+      } else {
+        _this.on("change:state", function(){
+          if(_this.isFullyAuthorized()){
+            resolve();
+          }
+        });
+      }
+    });
+  },
+
   has: function(property){
     var value = this.get(property);
     return value !== undefined && value !== null;
@@ -69,7 +88,8 @@ var AuthorizationState = Backbone.Model.extend({
   },
 
   setExpiresIn: function(newValue){
-    this._setExpiresOn(Date.now() + newValue);
+    var timeSpanInMilliSeconds = (parseInt(newValue,10) * 1000);
+    this._setExpiresOn(Date.now() + timeSpanInMilliSeconds);
   },
 
   _protectedSet: function(attribute, newValue){
@@ -81,13 +101,14 @@ var AuthorizationState = Backbone.Model.extend({
   }
 });
 
+
 function OAuthHandler(state) {
   var _clientId = "XXX";
   var _clientSecret = "XXX";
   var _redirectUri = "urn:ietf:wg:oauth:2.0:oob";
   var _this = this;
 
-  state.on("change:accessToken", function(){
+  state.on("change:state", function(){
     _this.updateUiState();
   });
 
@@ -142,54 +163,71 @@ function OAuthHandler(state) {
       data: _data,
       success: function(data){
         var json = JSON.parse(data);
-        console.log(json);
         state.setAccessToken(json.access_token);
         state.setRefreshToken(json.refresh_token);
         state.setExpiresIn(json.expires_in);
+        state.updateState();
       },
       dataType: "text"
     });
   };
+
+  function AuthorizedConnection(){
+    var _getRequests = [];
+    var _this = this;
+    this.get = function(url){
+      return state.whenFullyAuthorized().then(function(){
+        url = _this._addAccessToken(url);
+        return Promise.resolve($.ajax(url));
+      });
+    };
+
+    this._addAccessToken = function(url){
+      return url + "&access_token="+state.get("accessToken");
+    }
+  }
+
+  this.getConnection = function(){
+    return new AuthorizedConnection();
+  }
 }
 
-// function YoutubeApi(){
-//   var _watchLaterId;
-//   var _this = this;
-//
-//   this.getLists = function(){
-//     var request = Promise.resolve($.ajax("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true&access_token="+_accessToken));
-//     request.then(function(data){
-//       _watchLaterId = data.items[0].contentDetails.relatedPlaylists.watchLater;
-//       alert(_watchLaterId);
-//       // _this.getWatchLaterContents();
-//     });
-//   };
-//
-//   this.getWatchLaterContents = function(){
-//     $.ajax({
-//       type: "GET",
-//       url: "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+_watchLaterId+"&access_token="+_accessToken,
-//       success: function(data){
-//         var videos = data.items;
-//         var titles = videos.map(function(video){
-//           return video.snippet.title;
-//         });
-//         titles.forEach(function(title) {
-//           $("#titles").append("<li>"+title+"</li>");
-//         });
-//       },
-//       error: function(){
-//         alert("ERROR!");
-//       }
-//     });
-//   };
-//
-//
-//
-// }
+function YoutubeApi(connection){
+  var _watchLaterId;
+  var _this = this;
+
+
+  this._getWatchLaterId = function(){
+    return connection.
+      get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
+      then(function(data){
+        return data.items[0].contentDetails.relatedPlaylists.watchLater;
+      });
+  };
+
+  this.buildWatchLaterList = function(){
+    this._getWatchLaterId().then(this.getWatchLaterContents);
+  };
+
+  this.getWatchLaterContents = function(watchLaterId){
+    connection.
+      get("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+watchLaterId).
+      then(function(data){
+        var videos = data.items;
+        var titles = videos.map(function(video){
+          return video.snippet.title;
+        });
+        titles.forEach(function(title) {
+          $("#titles").append("<li>"+title+"</li>");
+        });
+      })
+  };
+}
 
 $(function(){
   var authorizationState = new AuthorizationState;
   var oauth = new OAuthHandler(authorizationState);
   oauth.injectOnPage();
+  var youtube = new YoutubeApi(oauth.getConnection());
+  youtube.buildWatchLaterList();
 });
