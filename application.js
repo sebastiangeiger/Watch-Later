@@ -193,11 +193,8 @@ function OAuthHandler(state) {
 }
 
 function YoutubeApi(connection){
-  var _watchLaterId;
-  var _this = this;
 
-
-  this._getWatchLaterId = function(){
+  this.getWatchLaterId = function(){
     return connection.
       get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
       then(function(data){
@@ -205,23 +202,50 @@ function YoutubeApi(connection){
       });
   };
 
-  this.buildWatchLaterList = function(){
-    this._getWatchLaterId().then(this.getWatchLaterContents);
+  this.getPlayListItems = function(watchLaterId){
+    return connection.
+      get("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+watchLaterId);
   };
 
-  this.getWatchLaterContents = function(watchLaterId){
-    connection.
-      get("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+watchLaterId).
+}
+
+var Video = Backbone.Model.extend({
+})
+var Videos = Backbone.Collection.extend({
+  model: Video
+})
+
+
+function Controller(youtubeApi){
+
+  this.buildWatchLaterList = function(videos){
+    youtubeApi.getWatchLaterId().then(youtubeApi.getPlayListItems).
       then(function(data){
-        var videos = data.items;
-        var titles = videos.map(function(video){
-          return video.snippet.title;
-        });
-        titles.forEach(function(title) {
-          $("#titles").append("<li>"+title+"</li>");
-        });
-      })
+        return this.addItemsToCollection(data,videos);
+      }).
+      catch(function(error){
+        console.error("FAILED", error);
+      });
   };
+
+  this.addItemsToCollection = function(data,videos){
+    data.items.forEach(function(item){
+      if(item.kind === "youtube#playlistItem"){
+        var snippet = item.snippet;
+        var position = parseInt(snippet.position,10);
+        var video = new Video({
+          id: snippet.resourceId.videoId,
+          title: snippet.title,
+          description: snippet.description,
+          position: position
+        });
+        videos.add(video, {at: position});
+      } else {
+        console.error("Don't know how to add this item:", data);
+      }
+    });
+    return data;
+  }
 }
 
 $(function(){
@@ -229,5 +253,10 @@ $(function(){
   var oauth = new OAuthHandler(authorizationState);
   oauth.injectOnPage();
   var youtube = new YoutubeApi(oauth.getConnection());
-  youtube.buildWatchLaterList();
+  var controller = new Controller(youtube);
+  var videos = new Videos;
+  videos.on("add", function(video){
+    $("#titles").append("<li>"+video.get("title")+"</li>");
+  });
+  controller.buildWatchLaterList(videos);
 });
