@@ -1,0 +1,27 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Watch Later</title>
+</head>
+
+<body>
+<div id="authorization">
+  <button id="startAuth">Authorize this application</button>
+  <form id="authCode">
+    <input type="text" placeholder="Copy and paste code here" />
+    <input type="submit" disabled="disabled"/>
+  </form>
+</div>
+<div id="main">
+  <h1>This is the main window</h1>
+  <div id="info"></div>
+  <ul id="titles"></ul>
+</div>
+<script src="jquery.js"></script>
+<script src="underscore.js"></script>
+<script src="backbone.js"></script>
+<script src="application.js"></script>
+</body>
+</html>
