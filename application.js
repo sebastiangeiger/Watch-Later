@@ -44,6 +44,10 @@ var AuthorizationState = Backbone.Model.extend({
     return this.get("state") === this.PossibleStates.FULLY_AUTHORIZED;
   },
 
+  isAccessTokenExpired: function(){
+    return this.get("state") === this.PossibleStates.ACCESS_TOKEN_EXPIRED;
+  },
+
   whenFullyAuthorized: function(){
     var _this = this;
     return new Promise(function(resolve, reject){
@@ -171,6 +175,34 @@ function OAuthHandler(state) {
       dataType: "text"
     });
   };
+
+  this.handleExpiredAccessToken = function(){
+    if(state.isAccessTokenExpired()){
+      var _data = {
+        refresh_token: state.get("refreshToken"),
+        client_id: _clientId,
+        client_secret: _clientSecret,
+        grant_type: "refresh_token"
+      };
+      $.ajax({
+        type: "POST",
+        url: "https://accounts.google.com/o/oauth2/token",
+        data: _data,
+        success: function(data){
+          var json = JSON.parse(data);
+          state.setAccessToken(json.access_token);
+          state.setExpiresIn(json.expires_in);
+          state.updateState();
+        },
+        dataType: "text"
+      });
+    }
+  };
+
+  _this.handleExpiredAccessToken();
+  state.on("change:state", function(){
+    _this.handleExpiredAccessToken();
+  });
 
   function AuthorizedConnection(){
     var _getRequests = [];
