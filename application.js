@@ -204,33 +204,36 @@ function YoutubeApi(connection){
   };
 
   this.getPlayListItems = function(watchLaterId,pageToken,maxResults){
-    maxResults = maxResults || 5;
+    maxResults = maxResults || 50;
     var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
     url += "&playlistId="+watchLaterId;
     url += "&maxResults="+maxResults
-    if(pageToken){
+    if(pageToken && pageToken !== "firstPage"){
       url += "&pageToken="+pageToken;
     }
     return connection.get(url);
   };
 
+
   this.getAllPlayListItems = function(watchLaterId){
-    return new Promise(function(resolve,reject){
-      var initial = _this.getPlayListItems(watchLaterId);
-      var items = [];
-      initial.then(function(data){
-        items = items.concat(data.items);
-        var nextPageToken = data.nextPageToken;
-        console.log("nextPageToken",nextPageToken);
-        var subsequent = _this.getPlayListItems(watchLaterId,nextPageToken);
-        subsequent.then(function(data){
-          items = items.concat(data.items);
-          nextPageToken = data.nextPageToken;
-          console.log("nextPageToken",nextPageToken);
-          resolve(items);
-        });
+    //Recursivly goes through and gets all items depending on whether the
+    //current data page points to a next page or not
+    //If it points to a next page, then it will create a new Promise that
+    //needs to be resolved first
+    var recurse = function(watchLaterId,nextPageToken,items){
+      items = items || [];
+      return new Promise(function(resolve,reject){
+        _this.getPlayListItems(watchLaterId,nextPageToken).then(function(data){
+          var newItems = items.concat(data.items);
+          if(data.nextPageToken){
+            resolve(recurse(watchLaterId,data.nextPageToken,newItems));
+          } else {
+            resolve(newItems);
+          }
+        })
       });
-    });
+    };
+    return recurse(watchLaterId);
   };
 
 }
