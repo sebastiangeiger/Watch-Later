@@ -193,6 +193,7 @@ function OAuthHandler(state) {
 }
 
 function YoutubeApi(connection){
+  var _this = this;
 
   this.getWatchLaterId = function(){
     return connection.
@@ -202,9 +203,34 @@ function YoutubeApi(connection){
       });
   };
 
-  this.getPlayListItems = function(watchLaterId){
-    return connection.
-      get("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId="+watchLaterId);
+  this.getPlayListItems = function(watchLaterId,pageToken,maxResults){
+    maxResults = maxResults || 5;
+    var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+    url += "&playlistId="+watchLaterId;
+    url += "&maxResults="+maxResults
+    if(pageToken){
+      url += "&pageToken="+pageToken;
+    }
+    return connection.get(url);
+  };
+
+  this.getAllPlayListItems = function(watchLaterId){
+    return new Promise(function(resolve,reject){
+      var initial = _this.getPlayListItems(watchLaterId);
+      var items = [];
+      initial.then(function(data){
+        items = items.concat(data.items);
+        var nextPageToken = data.nextPageToken;
+        console.log("nextPageToken",nextPageToken);
+        var subsequent = _this.getPlayListItems(watchLaterId,nextPageToken);
+        subsequent.then(function(data){
+          items = items.concat(data.items);
+          nextPageToken = data.nextPageToken;
+          console.log("nextPageToken",nextPageToken);
+          resolve(items);
+        });
+      });
+    });
   };
 
 }
@@ -217,19 +243,20 @@ var Videos = Backbone.Collection.extend({
 
 
 function Controller(youtubeApi){
+  var _this = this;
 
   this.buildWatchLaterList = function(videos){
-    youtubeApi.getWatchLaterId().then(youtubeApi.getPlayListItems).
-      then(function(data){
-        return this.addItemsToCollection(data,videos);
+    youtubeApi.getWatchLaterId().then(youtubeApi.getAllPlayListItems).
+      then(function(items){
+        return _this.addItemsToCollection(items,videos);
       }).
       catch(function(error){
-        console.error("FAILED", error);
+        console.error("FAILED", error.stack);
       });
   };
 
-  this.addItemsToCollection = function(data,videos){
-    data.items.forEach(function(item){
+  this.addItemsToCollection = function(items,videos){
+    items.forEach(function(item){
       if(item.kind === "youtube#playlistItem"){
         var snippet = item.snippet;
         var position = parseInt(snippet.position,10);
@@ -241,10 +268,10 @@ function Controller(youtubeApi){
         });
         videos.add(video, {at: position});
       } else {
-        console.error("Don't know how to add this item:", data);
+        console.error("Don't know how to add this item:", item);
       }
     });
-    return data;
+    return items;
   }
 }
 
@@ -256,7 +283,7 @@ $(function(){
   var controller = new Controller(youtube);
   var videos = new Videos;
   videos.on("add", function(video){
-    $("#titles").append("<li>"+video.get("title")+"</li>");
+    $("#titles").append("<li>"+video.get("position")+": "+video.get("title")+"</li>");
   });
   controller.buildWatchLaterList(videos);
 });
