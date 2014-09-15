@@ -7,7 +7,16 @@
 </head>
 
 <body>
+<script type="text/x-handlebars">
+  <header><h1>Watch Later</h1></header>
+  {{outlet}}
+</script>
 
+<script type="text/x-handlebars" id="app">
+  {{text}}
+</script>
+
+<script src="bower_components/jquery/dist/jquery.js"></script>
 <script src="bower_components/handlebars/handlebars.js"></script>
 <script src="bower_components/ember/ember.js"></script>
 <script src="application.js"></script>
