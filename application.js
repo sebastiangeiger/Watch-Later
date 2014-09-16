@@ -12,7 +12,7 @@ App.AuthorizationState = Ember.Object.extend({
   isAuthorized: function() {
     console.log("Asking if authorized " + this.get('authToken'));
     return !!this.get('authToken');
-  },
+  }.property('authToken'),
 
   deauthorize: function(){
     delete localStorage.auth_token;
@@ -47,15 +47,12 @@ App.ApplicationRoute = Ember.Route.extend({
 });
 
 App.ApplicationController = Ember.ObjectController.extend({
-  isAuthorized: function(){
-    return false;
-  }
 });
 
 
 App.AppRoute = Ember.Route.extend({
   redirect: function(model, transition){
-    if(this.modelFor('application').isAuthorized()){
+    if(this.modelFor('application').get('isAuthorized')){
       this.transitionTo('videos');
     } else {
       this.transitionTo('authorize');
