@@ -3,32 +3,6 @@
 
 window.App = Ember.Application.create();
 
-
-App.AuthorizationState = Ember.Object.extend({
-  init: function(){
-    this.set('authToken', localStorage.auth_token);
-  },
-
-  isAuthorized: function() {
-    console.log("isAuthorized = " + !!this.get('authToken') + " (" + this.get('authToken') + ")");
-    return !!this.get('authToken');
-  }.property('authToken'),
-
-  deauthorize: function(){
-    delete localStorage.auth_token;
-    this.set('authToken', localStorage.auth_token);
-  },
-
-  authorize: function(authToken){
-    if(!!authToken){
-      localStorage.auth_token = authToken
-      this.set('authToken', localStorage.auth_token);
-    } else {
-      console.log("Authorizing failed");
-    }
-  }
-});
-
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
     this.resource('videos');
@@ -80,6 +54,32 @@ App.AuthorizeRoute = Ember.Route.extend({
 
 
 App.VideosRoute = Ember.Route.extend({});
+
+
+App.AuthorizationState = Ember.Object.extend({
+  init: function(){
+    this.set('authToken', localStorage.auth_token);
+  },
+
+  isAuthorized: function() {
+    console.log("isAuthorized = " + !!this.get('authToken') + " (" + this.get('authToken') + ")");
+    return !!this.get('authToken');
+  }.property('authToken'),
+
+  deauthorize: function(){
+    delete localStorage.auth_token;
+    this.set('authToken', localStorage.auth_token);
+  },
+
+  authorize: function(authToken){
+    if(!!authToken){
+      localStorage.auth_token = authToken
+      this.set('authToken', localStorage.auth_token);
+    } else {
+      console.log("authorize failed");
+    }
+  }
+});
 
 
 })();
