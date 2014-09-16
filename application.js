@@ -10,7 +10,7 @@ App.AuthorizationState = Ember.Object.extend({
   },
 
   isAuthorized: function() {
-    console.log("Asking if authorized " + this.get('authToken'));
+    console.log("isAuthorized = " + !!this.get('authToken') + " (" + this.get('authToken') + ")");
     return !!this.get('authToken');
   }.property('authToken'),
 
@@ -20,8 +20,12 @@ App.AuthorizationState = Ember.Object.extend({
   },
 
   authorize: function(authToken){
-    localStorage.auth_token = authToken
-    this.set('authToken', localStorage.auth_token);
+    if(!!authToken){
+      localStorage.auth_token = authToken
+      this.set('authToken', localStorage.auth_token);
+    } else {
+      console.log("Authorizing failed");
+    }
   }
 });
 

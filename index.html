@@ -19,8 +19,8 @@
 
 <script type="text/x-handlebars" id="authorize">
   <button {{action "openAuthWindow"}}>Start Auth</button>
-  Auth Token: {{input type="text" value=authToken}}
-  <button {{action 'authorize' authToken}}>Authorize</button>
+  Auth Token: {{input type="text" value=newAuthToken }}
+  <button {{action 'authorize' newAuthToken}}>Authorize</button>
 </script>
 
 <script type="text/x-handlebars" id="videos">
