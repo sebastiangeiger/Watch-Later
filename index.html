@@ -12,13 +12,20 @@
   {{outlet}}
 </script>
 
-<script type="text/x-handlebars" id="app">
-  {{text}}
+<script type="text/x-handlebars" id="authorize">
+  <button {{action "openAuthWindow"}}>Start Auth</button>
+  Auth Token: {{input type="text" value=authToken}}
+  <button {{action 'authorize' authToken}}>Authorize</button>
+</script>
+
+<script type="text/x-handlebars" id="videos">
+  <div>TODO: Show videos here<div>
 </script>
 
 <script src="bower_components/jquery/dist/jquery.js"></script>
 <script src="bower_components/handlebars/handlebars.js"></script>
 <script src="bower_components/ember/ember.js"></script>
+<script src="config.js"></script>
 <script src="application.js"></script>
 </body>
 </html>
