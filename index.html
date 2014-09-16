@@ -8,7 +8,12 @@
 
 <body>
 <script type="text/x-handlebars">
-  <header><h1>Watch Later</h1></header>
+  <header>
+    <h1>Watch Later</h1>
+    {{#if isAuthorized}}
+      <button {{action 'deauthorize'}}>Revoke authorization</button>
+    {{/if}}
+  </header>
   {{outlet}}
 </script>
 
