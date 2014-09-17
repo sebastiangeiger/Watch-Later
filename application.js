@@ -46,8 +46,14 @@ App.AuthorizeRoute = Ember.Route.extend({
     },
 
     authorize: function(authToken){
-      this.modelFor('application').authorize(authToken);
-      this.transitionTo('videos');
+      var _this = this;
+      this.modelFor('application').authorize(authToken).then(
+        function(){
+          _this.transitionTo('videos');
+        },
+        function(error) {
+          console.log(error)
+        });
     }
   }
 });
@@ -72,12 +78,16 @@ App.AuthorizationState = Ember.Object.extend({
   },
 
   authorize: function(authToken){
-    if(!!authToken){
-      localStorage.auth_token = authToken
-      this.set('authToken', localStorage.auth_token);
-    } else {
-      console.log("authorize failed");
-    }
+    var _this = this;
+    return new Ember.RSVP.Promise(function(resolve, reject) {
+      if(!!authToken){
+        localStorage.auth_token = authToken
+        _this.set('authToken', localStorage.auth_token);
+        resolve(true);
+      } else {
+        reject("authToken was " + String(authToken));
+      }
+    });
   }
 });
 
