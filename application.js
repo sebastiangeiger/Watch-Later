@@ -29,7 +29,7 @@ App.ApplicationController = Ember.ObjectController.extend({
 
 
 App.AppRoute = Ember.Route.extend({
-  redirect: function(model, transition){
+  afterModel: function(model, transition){
     if(this.modelFor('application').get('isAuthorized')){
       this.transitionTo('videos');
     } else {
@@ -40,9 +40,19 @@ App.AppRoute = Ember.Route.extend({
 
 
 App.AuthorizeRoute = Ember.Route.extend({
+  afterModel: function(model, transition){
+    if(this.modelFor('application').get('isAuthorized')){
+      this.transitionTo('videos');
+    } else {
+      this.transitionTo('authorize');
+    }
+  },
   actions: {
     openAuthWindow: function() {
-      window.open("https://accounts.google.com/o/oauth2/auth?client_id="+window.clientId+"&redirect_uri=urn:ietf:wg:oauth:2.0:oob&scope=https://www.googleapis.com/auth/youtube&response_type=code", "Google", "height=600,width=400");
+      window.open("https://accounts.google.com/o/oauth2/auth?"+
+                    "client_id="+window.clientId+
+                    "&redirect_uri="+window.redirectUri+
+                    "&scope=https://www.googleapis.com/auth/youtube&response_type=code", "Google", "height=600,width=400");
     },
 
     authorize: function(authToken){
