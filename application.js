@@ -74,31 +74,70 @@ App.VideosRoute = Ember.Route.extend({});
 
 App.AuthorizationState = Ember.Object.extend({
   init: function(){
-    this.set('authToken', localStorage.auth_token);
+    this.set('authToken', null);
+    this.get('expiresIn');
+    this.get('expirationDate');
   },
 
   isAuthorized: function() {
-    console.log("isAuthorized = " + !!this.get('authToken') + " (" + this.get('authToken') + ")");
-    return !!this.get('authToken');
-  }.property('authToken'),
+    return false;
+  }.property(),
+
+  expirationDate: function() {
+    var temp = new Date();
+    var expiresIn = parseInt(this.get('expiresIn'), 10);
+    temp.setTime(temp.getTime() + 1000 * expiresIn)
+    return temp
+  }.property('expiresIn'),
 
   deauthorize: function(){
-    delete localStorage.auth_token;
-    this.set('authToken', localStorage.auth_token);
   },
 
   authorize: function(authToken){
     var _this = this;
+    var _data = {
+      code: authToken,
+      client_id: window.clientId,
+      client_secret: window.clientSecret,
+      redirect_uri: window.redirectUri,
+      grant_type: "authorization_code"
+    };
     return new Ember.RSVP.Promise(function(resolve, reject) {
       if(!!authToken){
-        localStorage.auth_token = authToken
-        _this.set('authToken', localStorage.auth_token);
-        resolve(true);
+        resolve(authToken);
       } else {
         reject("authToken was " + String(authToken));
       }
+    }).then(function(authToken){
+      return $.ajax({
+        type: "POST",
+        url: "https://accounts.google.com/o/oauth2/token",
+        data: _data,
+        dataType: "text"
+      })
+    }).then(function(payload){
+      payload = JSON.parse(payload);
+      _this.setProperties({
+        accessToken: payload.access_token,
+        refreshToken: payload.refresh_token,
+        expiresIn: payload.expires_in
+      })
     });
-  }
+  },
+
+  _localStorageObserver: function(object,changed){
+    var key = "authorizationState."+changed;
+    var value = object.get(changed);
+    console.log("Set " +  key + " to " +  value);
+    localStorage.setItem(key, value);
+  }.observes('accessToken', 'refreshToken', 'expirationDate'),
+
+  _moreObserver: function(object,changed){
+    var value = object.get(changed);
+    console.log(changed + " changed to " +  value);
+  }.observes('accessToken', 'refreshToken', 'expirationDate')
+
+
 });
 
 
