@@ -82,6 +82,7 @@ App.AuthorizationState = Ember.Object.extend({
 
   init: function(){
     this._readFromLocalStorage();
+    this._determineState();
     if(!this.get('authorizationGateway')){
       this.set('authorizationGateway', App.AuthorizationGateway.create());
     };
@@ -118,14 +119,14 @@ App.AuthorizationState = Ember.Object.extend({
     localStorage.setItem(key, value);
   }.observes('accessToken', 'refreshToken', 'expirationDate'),
 
-  _switchStates: function(object,changed){
+  _determineState: function(){
     var newState = "needsAuthCode";
-    if(object.get('accessToken') && object.get('refreshToken')){
+    if(this.get('accessToken') && this.get('refreshToken')){
       newState = 'fullyAuthorized';
     } else {
       newState = 'needsAuthCode';
     }
-    object.set('state', newState);
+    this.set('state', newState);
   }.observes('accessToken', 'refreshToken', 'expirationDate'),
 
   _readFromLocalStorage: function(){
