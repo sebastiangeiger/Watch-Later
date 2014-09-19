@@ -122,8 +122,6 @@ App.AuthorizationState = Ember.Object.extend({
     var value = object.get(changed);
     console.log(changed + " changed to " +  value);
   }.observes('accessToken', 'refreshToken', 'expirationDate')
-
-
 });
 
 App.AuthorizationGateway = Ember.Object.extend({
