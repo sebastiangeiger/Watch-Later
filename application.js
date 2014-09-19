@@ -77,26 +77,15 @@ App.VideosRoute = Ember.Route.extend({});
 App.AuthorizationState = Ember.Object.extend({
 
   authCode: null,
+  expirationDate: null,
   state: "needsAuthCode",
 
   init: function(){
-    this.get('expirationDate'); //Making sure expirationDate gets computed
     this._readFromLocalStorage();
     if(!this.get('authorizationGateway')){
       this.set('authorizationGateway', App.AuthorizationGateway.create());
     };
   },
-
-  expirationDate: function() {
-    var expiresIn = this.get('expiresIn');
-    if(expiresIn){
-      expiresIn = parseInt(expiresIn, 10);
-      var temp = new Date();
-      temp.setTime(temp.getTime() + 1000 * expiresIn)
-      this.set('expiresIn',null); //expiresIn served its function
-      return temp;
-    }
-  }.property('expiresIn'),
 
   deauthorize: function(){
   },
@@ -146,7 +135,19 @@ App.AuthorizationState = Ember.Object.extend({
     if(expirationDate){
       this.set('expirationDate', expirationDate);
     }
-  }
+  },
+
+  _updateExpirationDate: function() {
+    var expiresIn = this.get('expiresIn');
+    if(expiresIn){
+      expiresIn = parseInt(expiresIn, 10);
+      var expirationDate = new Date();
+      expirationDate.setTime(expirationDate.getTime() + 1000 * expiresIn)
+      this.set('expirationDate',expirationDate);
+      this.set('expiresIn',null); //expiresIn served its purpose
+    }
+  }.observes('expiresIn')
+
 });
 
 App.AuthorizationGateway = Ember.Object.extend({
