@@ -30,9 +30,10 @@ App.ApplicationController = Ember.ObjectController.extend({
 
 App.AppRoute = Ember.Route.extend({
   afterModel: function(model, transition){
-    if(this.modelFor('application').get('isAuthorized')){
+    var appModel = this.modelFor('application');
+    if(appModel.get('fullyAuthorized')){
       this.transitionTo('videos');
-    } else {
+    } else if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
     }
   }
@@ -41,9 +42,10 @@ App.AppRoute = Ember.Route.extend({
 
 App.AuthorizeRoute = Ember.Route.extend({
   afterModel: function(model, transition){
-    if(this.modelFor('application').get('isAuthorized')){
+    var appModel = this.modelFor('application');
+    if(appModel.get('fullyAuthorized')){
       this.transitionTo('videos');
-    } else {
+    } else if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
     }
   },
@@ -74,7 +76,8 @@ App.VideosRoute = Ember.Route.extend({});
 
 App.AuthorizationState = Ember.Object.extend({
 
-  authToken: null,
+  authCode: null,
+  state: "needsAuthCode",
 
   init: function(){
     this.get('expirationDate'); //Making sure expirationDate gets computed
@@ -82,10 +85,6 @@ App.AuthorizationState = Ember.Object.extend({
       this.set('authorizationGateway', App.AuthorizationGateway.create());
     };
   },
-
-  isAuthorized: function() {
-    return false;
-  }.property(),
 
   expirationDate: function() {
     var expiresIn = this.get('expiresIn');
@@ -114,11 +113,29 @@ App.AuthorizationState = Ember.Object.extend({
       });
   },
 
+  needsAuthCode: function(){
+    return this.get('state') === 'needsAuthCode';
+  }.property('state'),
+
+  fullyAuthorized: function(){
+    return this.get('state') === 'fullyAuthorized';
+  }.property('state'),
+
   _localStorageObserver: function(object,changed){
     var key = "authorizationState."+changed;
     var value = object.get(changed);
-    console.log("Set " +  key + " to " +  value);
+    // console.log("Set " +  key + " to " +  value);
     localStorage.setItem(key, value);
+  }.observes('accessToken', 'refreshToken', 'expirationDate'),
+
+  _switchStates: function(object,changed){
+    var newState = "needsAuthCode";
+    if(object.get('accessToken') && object.get('refreshToken')){
+      newState = 'fullyAuthorized';
+    } else {
+      newState = 'needsAuthCode';
+    }
+    object.set('state', newState);
   }.observes('accessToken', 'refreshToken', 'expirationDate'),
 });
 

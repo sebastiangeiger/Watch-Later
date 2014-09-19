@@ -3,12 +3,6 @@ App.rootElement = '#ember-testing';
 
 module('Unit: AuthorizationState');
 
-test('isAuthorized initially returns false', function() {
-  var authorizationState = App.AuthorizationState.create();
-  equal(authorizationState.get('isAuthorized'), false);
-});
-
-
 var gateway = {
   authorize: function(){
     return new Ember.RSVP.Promise(function(resolve){
@@ -66,4 +60,19 @@ test('setting expiresIn sets it back to null afterwards', function(){
   var state = App.AuthorizationState.create({authorizationGateway: gateway});
   state.set('expiresIn', '3600');
   equal(state.get('expiresIn'), null);
+});
+
+test('state is initially "needsAuthCode"', function() {
+  var state = App.AuthorizationState.create();
+  equal(state.get('state'),'needsAuthCode');
+});
+
+test('state changes "fullyAuthorized" after authorization succeeded', function() {
+  var state = App.AuthorizationState.create({authorizationGateway: gateway});
+  state.set('authCode', 'the_auth_code');
+  equal(state.get('state'),'needsAuthCode');
+  Ember.run(function(){
+    state.authorize("an_auth_token");
+  });
+  equal(state.get('state'),'fullyAuthorized');
 });
