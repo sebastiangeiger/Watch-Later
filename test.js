@@ -95,3 +95,19 @@ test('the state is properly restored from localStorage', function(){
   equal(state.get('expirationDate'), the_date);
 });
 
+test('deauthorize removes everything related to authorization', function(){
+  localStorage.setItem("authorizationState.accessToken","stored_access_token");
+  localStorage.setItem("authorizationState.refreshToken","stored_refresh_token");
+  var the_date = new Date();
+  localStorage.setItem("authorizationState.expirationDate", the_date);
+  var state = App.AuthorizationState.create();
+  state.deauthorize();
+  equal(state.get('accessToken'), undefined);
+  equal(state.get('refreshToken'), undefined);
+  equal(state.get('expirationDate'), undefined);
+  equal(state.get('state'),'needsAuthCode');
+  equal(localStorage.getItem("authorizationState.accessToken"), undefined);
+  equal(localStorage.getItem("authorizationState.refreshToken"), undefined);
+  equal(localStorage.getItem("authorizationState.expirationDate"), undefined);
+});
+

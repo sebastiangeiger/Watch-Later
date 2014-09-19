@@ -74,6 +74,7 @@ App.AuthorizeRoute = Ember.Route.extend({
 App.VideosRoute = Ember.Route.extend({});
 
 
+// ====== Models ========= //
 App.AuthorizationState = Ember.Object.extend({
 
   authCode: null,
@@ -89,6 +90,11 @@ App.AuthorizationState = Ember.Object.extend({
   },
 
   deauthorize: function(){
+    this.setProperties({
+      accessToken: null,
+      refreshToken: null,
+      expirationDate: null
+    });
   },
 
   authorize: function(authToken){
@@ -116,7 +122,11 @@ App.AuthorizationState = Ember.Object.extend({
     var key = "authorizationState."+changed;
     var value = object.get(changed);
     // console.log("Set " +  key + " to " +  value);
-    localStorage.setItem(key, value);
+    if(value){
+      localStorage.setItem(key, value);
+    } else {
+      localStorage.removeItem(key);
+    }
   }.observes('accessToken', 'refreshToken', 'expirationDate'),
 
   _determineState: function(){
