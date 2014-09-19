@@ -1,0 +1,30 @@
+* {
+  padding: 0px;
+  margin: 0px;
+}
+
+body {
+  background-color: #a2a2a2;
+  font-family: Helvetica;
+}
+header {
+  background-color: #1d1d1d;
+  color: white;
+  padding: 2em;
+  border-bottom: 1px solid white;
+}
+h1 {
+  font-weight: lighter;
+  display: inline;
+}
+
+button {
+  border: 1px solid white;
+  background-color: white;
+  padding: 0.5em;
+  font-family: Helvetica;
+}
+
+#videos {
+  padding: 1em;
+}

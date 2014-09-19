@@ -217,7 +217,6 @@ App.VideoList = Ember.Object.extend({
   getWatchLaterId: function(){
     var _this = this;
     this.get('youTubeApi').getWatchLaterId().then(function(watchLaterId){
-      console.log(watchLaterId);
       _this.set('watchLaterId', watchLaterId);
     });
   }
