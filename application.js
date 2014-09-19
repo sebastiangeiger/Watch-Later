@@ -71,7 +71,11 @@ App.AuthorizeRoute = Ember.Route.extend({
 });
 
 
-App.VideosRoute = Ember.Route.extend({});
+App.VideosRoute = Ember.Route.extend({
+  model: function(){
+    return App.VideoList.create({authorizationState: this.modelFor('application')});
+  }
+});
 
 
 // ====== Models ========= //
@@ -121,7 +125,6 @@ App.AuthorizationState = Ember.Object.extend({
   _localStorageObserver: function(object,changed){
     var key = "authorizationState."+changed;
     var value = object.get(changed);
-    // console.log("Set " +  key + " to " +  value);
     if(value){
       localStorage.setItem(key, value);
     } else {
@@ -157,9 +160,21 @@ App.AuthorizationState = Ember.Object.extend({
       this.set('expirationDate',expirationDate);
       this.set('expiresIn',null); //expiresIn served its purpose
     }
-  }.observes('expiresIn')
+  }.observes('expiresIn'),
 
+  connection: function(){
+    return new AuthorizedConnection(this.get('accessToken'));
+  },
 });
+
+function AuthorizedConnection(accessToken){
+  this.get = function(url){
+    url = url + "&access_token="+accessToken;
+    return $.ajax(url)
+  };
+
+}
+
 
 App.AuthorizationGateway = Ember.Object.extend({
   authorize: function(authToken){
@@ -190,5 +205,33 @@ App.AuthorizationGateway = Ember.Object.extend({
   }
 });
 
+App.VideoList = Ember.Object.extend({
+  watchLaterId: null,
+
+  init: function(){
+    var api = App.YouTubeApi.create({authorization: this.get("authorizationState")});
+    this.set('youTubeApi', api)
+    this.getWatchLaterId();
+  },
+
+  getWatchLaterId: function(){
+    var _this = this;
+    this.get('youTubeApi').getWatchLaterId().then(function(watchLaterId){
+      console.log(watchLaterId);
+      _this.set('watchLaterId', watchLaterId);
+    });
+  }
+});
+
+App.YouTubeApi = Ember.Object.extend({
+  getWatchLaterId: function(){
+    return this.get('authorization').
+      connection().
+      get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
+      then(function(payload){
+        return payload.items[0].contentDetails.relatedPlaylists.watchLater;
+      });
+  }
+});
 
 })();
