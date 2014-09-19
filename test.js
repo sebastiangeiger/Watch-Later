@@ -1,7 +1,14 @@
 App.setupForTesting();
 App.rootElement = '#ember-testing';
 
-module('Unit: AuthorizationState');
+module('Unit: AuthorizationState',{
+      setup: function(){
+        localStorage.clear();
+      },
+      teardown: function(){
+        localStorage.clear();
+      }
+});
 
 var gateway = {
   authorize: function(){
@@ -76,3 +83,15 @@ test('state changes "fullyAuthorized" after authorization succeeded', function()
   });
   equal(state.get('state'),'fullyAuthorized');
 });
+
+test('the state is properly restored from localStorage', function(){
+  localStorage.setItem("authorizationState.accessToken","stored_access_token");
+  localStorage.setItem("authorizationState.refreshToken","stored_refresh_token");
+  var the_date = new Date();
+  localStorage.setItem("authorizationState.expirationDate", the_date);
+  var state = App.AuthorizationState.create();
+  equal(state.get('accessToken'), 'stored_access_token');
+  equal(state.get('refreshToken'), 'stored_refresh_token');
+  equal(state.get('expirationDate'), the_date);
+});
+

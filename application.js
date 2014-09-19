@@ -81,6 +81,7 @@ App.AuthorizationState = Ember.Object.extend({
 
   init: function(){
     this.get('expirationDate'); //Making sure expirationDate gets computed
+    this._readFromLocalStorage();
     if(!this.get('authorizationGateway')){
       this.set('authorizationGateway', App.AuthorizationGateway.create());
     };
@@ -137,6 +138,15 @@ App.AuthorizationState = Ember.Object.extend({
     }
     object.set('state', newState);
   }.observes('accessToken', 'refreshToken', 'expirationDate'),
+
+  _readFromLocalStorage: function(){
+    this.set('accessToken', localStorage["authorizationState.accessToken"]);
+    this.set('refreshToken', localStorage["authorizationState.refreshToken"]);
+    var expirationDate = localStorage["authorizationState.expirationDate"]
+    if(expirationDate){
+      this.set('expirationDate', expirationDate);
+    }
+  }
 });
 
 App.AuthorizationGateway = Ember.Object.extend({
