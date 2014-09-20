@@ -73,7 +73,9 @@ App.AuthorizeRoute = Ember.Route.extend({
 
 App.VideosRoute = Ember.Route.extend({
   model: function(){
-    return App.VideoList.create({authorizationState: this.modelFor('application')});
+    var state = this.modelFor('application');
+    var connection = App.AuthorizedConnection.create({authorizationState: state});
+    return App.VideoList.create({authorizedConnection: connection});
   }
 });
 
@@ -161,19 +163,15 @@ App.AuthorizationState = Ember.Object.extend({
       this.set('expiresIn',null); //expiresIn served its purpose
     }
   }.observes('expiresIn'),
-
-  connection: function(){
-    return new AuthorizedConnection(this.get('accessToken'));
-  },
 });
 
-function AuthorizedConnection(accessToken){
-  this.get = function(url){
+App.AuthorizedConnection = Ember.Object.extend({
+  getRequest: function(url){
+    var accessToken = this.get('authorizationState').get('accessToken');
     url = url + "&access_token="+accessToken;
     return $.ajax(url)
-  };
-
-}
+  }
+});
 
 
 App.AuthorizationGateway = Ember.Object.extend({
@@ -209,7 +207,7 @@ App.VideoList = Ember.Object.extend({
   watchLaterId: null,
 
   init: function(){
-    var api = App.YouTubeApi.create({authorization: this.get("authorizationState")});
+    var api = App.YouTubeApi.create({connection: this.get("authorizedConnection")});
     this.set('youTubeApi', api)
     this.getWatchLaterId();
   },
@@ -224,9 +222,8 @@ App.VideoList = Ember.Object.extend({
 
 App.YouTubeApi = Ember.Object.extend({
   getWatchLaterId: function(){
-    return this.get('authorization').
-      connection().
-      get("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
+    return this.get('connection').
+      getRequest("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
       then(function(payload){
         return payload.items[0].contentDetails.relatedPlaylists.watchLater;
       });
