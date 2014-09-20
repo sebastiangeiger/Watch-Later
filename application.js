@@ -205,29 +205,75 @@ App.AuthorizationGateway = Ember.Object.extend({
 
 App.VideoList = Ember.Object.extend({
   watchLaterId: null,
+  numberOfVideos: 0,
 
   init: function(){
     var api = App.YouTubeApi.create({connection: this.get("authorizedConnection")});
     this.set('youTubeApi', api)
-    this.getWatchLaterId();
+    this.getVideos();
   },
 
-  getWatchLaterId: function(){
+  getVideos: function(){
     var _this = this;
-    this.get('youTubeApi').getWatchLaterId().then(function(watchLaterId){
-      _this.set('watchLaterId', watchLaterId);
+    this.get('youTubeApi').getVideos().then(function(videosPromise){
+      //TODO: Don't know why I have to nest this
+      videosPromise.then(function(videos){
+        _this.set('videos', videos);
+      });
     });
   }
 });
 
 App.YouTubeApi = Ember.Object.extend({
+
+  getVideos: function(){
+    var _this = this;
+    return this.getWatchLaterId().then(function(watchLaterId){
+      return _this.getAllPlayListItems(watchLaterId);
+    });
+  },
+
   getWatchLaterId: function(){
     return this.get('connection').
       getRequest("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
       then(function(payload){
         return payload.items[0].contentDetails.relatedPlaylists.watchLater;
       });
+  },
+
+  getAllPlayListItems: function(watchLaterId){
+    //Recursivly goes through and gets all items depending on whether the
+    //current data page points to a next page or not
+    //If it points to a next page, then it will create a new Promise that
+    //needs to be resolved first
+    var _this = this;
+    var recurse = function(watchLaterId,nextPageToken,items){
+      items = items || [];
+      return new Promise(function(resolve,reject){
+        _this._getPlayListItems(watchLaterId,nextPageToken).then(function(data){
+          var newItems = items.concat(data.items);
+          if(data.nextPageToken){
+            resolve(recurse(watchLaterId,data.nextPageToken,newItems));
+          } else {
+            resolve(newItems);
+          }
+        })
+      });
+    };
+    return recurse(watchLaterId);
+  },
+
+  _getPlayListItems: function(watchLaterId,pageToken,maxResults){
+    maxResults = maxResults || 50;
+    var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
+    url += "&playlistId="+watchLaterId;
+    url += "&maxResults="+maxResults
+    if(pageToken && pageToken !== "firstPage"){
+      url += "&pageToken="+pageToken;
+    }
+    return this.get('connection').getRequest(url);
   }
+
 });
 
 })();

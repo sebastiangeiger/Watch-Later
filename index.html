@@ -25,9 +25,13 @@
 </script>
 
 <script type="text/x-handlebars" id="videos">
-  <div id="videos">
-    {{watchLaterId}}
-  </div>
+  <ol id="videos">
+    {{#each videos}}
+      <li>
+        {{this.snippet.title}}
+      </li>
+    {{/each}}
+  </ol>
 </script>
 
 <script src="bower_components/jquery/dist/jquery.js"></script>
