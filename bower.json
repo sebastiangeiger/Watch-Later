@@ -1,0 +1,21 @@
+{
+  "name": "Watch Later",
+  "version": "0.0.1",
+  "authors": [
+    "Sebastian Geiger"
+  ],
+  "main": "application.js",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.1",
+    "ember": "~1.7.0",
+    "qunit": "~1.15.0"
+  }
+}

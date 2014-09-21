@@ -1,0 +1,48 @@
+* {
+  padding: 0px;
+  margin: 0px;
+}
+
+body {
+  background-color: #d9d9d9;
+  font-family: Helvetica;
+}
+header {
+  background-color: #1d1d1d;
+  color: white;
+  padding: 2em;
+  border-bottom: 1px solid white;
+}
+h1 {
+  font-weight: lighter;
+  display: inline;
+}
+
+button {
+  border: 1px solid white;
+  background-color: white;
+  padding: 0.5em;
+  font-family: Helvetica;
+}
+
+#videos {
+}
+
+#videos li {
+  padding: 0.25em 1em;
+  list-style: none;
+  border-bottom: 1px solid darkgray;
+  overflow-y: hidden;
+}
+
+#videos li img {
+  float: left;
+  clear: both;
+  height: 4em;
+}
+
+#videos li .description {
+  float: left;
+  clear: right;
+  margin: 0.25em 0.5em;
+}

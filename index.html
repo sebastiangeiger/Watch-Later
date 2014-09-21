@@ -4,24 +4,41 @@
 <head>
   <meta charset="utf-8">
   <title>Watch Later</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-<div id="authorization">
-  <button id="startAuth">Authorize this application</button>
-  <form id="authCode">
-    <input type="text" placeholder="Copy and paste code here" />
-    <input type="submit" disabled="disabled"/>
-  </form>
-</div>
-<div id="main">
-  <h1>This is the main window</h1>
-  <div id="info"></div>
-  <ul id="titles"></ul>
-</div>
-<script src="jquery.js"></script>
-<script src="underscore.js"></script>
-<script src="backbone.js"></script>
+<script type="text/x-handlebars">
+  <header>
+    <h1>Watch Later</h1>
+    {{#if fullyAuthorized}}
+      <button {{action 'deauthorize'}}>Revoke authorization</button>
+    {{/if}}
+  </header>
+  {{outlet}}
+</script>
+
+<script type="text/x-handlebars" id="authorize">
+  <button {{action "openAuthWindow"}}>Start Auth</button>
+  Auth Token: {{input type="text" value=newAuthToken }}
+  <button {{action 'authorize' newAuthToken}}>Authorize</button>
+</script>
+
+<script type="text/x-handlebars" id="videos">
+  <ol id="videos">
+    {{#each videos}}
+      <li>
+        <img {{bind-attr src=this.snippet.thumbnails.standard.url}}/>
+        <span class="description">{{this.snippet.title}}</span>
+      </li>
+    {{/each}}
+  </ol>
+</script>
+
+<script src="bower_components/jquery/dist/jquery.js"></script>
+<script src="bower_components/handlebars/handlebars.js"></script>
+<script src="bower_components/ember/ember.js"></script>
+<script src="config.js"></script>
 <script src="application.js"></script>
 </body>
 </html>
