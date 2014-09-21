@@ -28,7 +28,8 @@
   <ol id="videos">
     {{#each videos}}
       <li>
-        {{this.snippet.title}}
+        <img {{bind-attr src=this.snippet.thumbnails.standard.url}}/>
+        <span class="description">{{this.snippet.title}}</span>
       </li>
     {{/each}}
   </ol>

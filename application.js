@@ -206,6 +206,7 @@ App.AuthorizationGateway = Ember.Object.extend({
 App.VideoList = Ember.Object.extend({
   watchLaterId: null,
   numberOfVideos: 0,
+  rawVideos: [],
 
   init: function(){
     var api = App.YouTubeApi.create({connection: this.get("authorizedConnection")});
@@ -213,14 +214,22 @@ App.VideoList = Ember.Object.extend({
     this.getVideos();
   },
 
+  videos: function(){
+    console.log(this.get('rawVideos')[0]);
+    return this.get('rawVideos').reverse();
+  }.property('rawVideos'),
+
   getVideos: function(){
-    var _this = this;
-    this.get('youTubeApi').getVideos().then(function(videosPromise){
-      //TODO: Don't know why I have to nest this
-      videosPromise.then(function(videos){
-        _this.set('videos', videos);
+    var storedVideos = localStorage.getItem('rawVideos');
+    if(storedVideos){
+      this.set('rawVideos', JSON.parse(storedVideos));
+    } else {
+      var _this = this;
+      this.get('youTubeApi').getVideos().then(function(videos){
+        _this.set('rawVideos', videos);
+        localStorage.setItem('rawVideos', JSON.stringify(videos));
       });
-    });
+    }
   }
 });
 
@@ -228,12 +237,16 @@ App.YouTubeApi = Ember.Object.extend({
 
   getVideos: function(){
     var _this = this;
-    return this.getWatchLaterId().then(function(watchLaterId){
-      return _this.getAllPlayListItems(watchLaterId);
-    });
+    return new Ember.RSVP.Promise(function(resolve,reject){
+      _this._getWatchLaterId().then(function(watchLaterId){
+        _this._getAllPlayListItems(watchLaterId).then(function(videos){
+          resolve(videos);
+        });
+      });
+    })
   },
 
-  getWatchLaterId: function(){
+  _getWatchLaterId: function(){
     return this.get('connection').
       getRequest("https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true").
       then(function(payload){
@@ -241,7 +254,7 @@ App.YouTubeApi = Ember.Object.extend({
       });
   },
 
-  getAllPlayListItems: function(watchLaterId){
+  _getAllPlayListItems: function(watchLaterId){
     //Recursivly goes through and gets all items depending on whether the
     //current data page points to a next page or not
     //If it points to a next page, then it will create a new Promise that
@@ -267,7 +280,7 @@ App.YouTubeApi = Ember.Object.extend({
     maxResults = maxResults || 50;
     var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet"
     url += "&playlistId="+watchLaterId;
-    url += "&maxResults="+maxResults
+    url += "&maxResults="+maxResults;
     if(pageToken && pageToken !== "firstPage"){
       url += "&pageToken="+pageToken;
     }
