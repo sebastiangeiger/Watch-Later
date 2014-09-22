@@ -212,7 +212,8 @@ App.Video.reopenClass({
     return App.Video.create({
       id: rawVideo.id,
       thumbnailUrl: rawVideo.snippet.thumbnails.default.url,
-      title: rawVideo.snippet.title
+      title: rawVideo.snippet.title,
+      videoId: rawVideo.snippet.resourceId.videoId
     });
   }
 });
