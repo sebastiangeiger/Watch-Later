@@ -37,11 +37,17 @@
   </ol>
 </script>
 
+<script type="text/x-handlebars" id="components/video-player">
+  <div> youtubeId: {{youtubeId}} </div>
+</script>
+
 <script type="text/x-handlebars" id="video">
   <aside>
     {{render 'videos'}}
   </aside>
-  <section id='video'><h2>{{id}}</h2></section>
+  <section id='video'>
+    {{video-player youtubeId=id}}
+  </section>
 </script>
 
 <script src="bower_components/jquery/dist/jquery.js"></script>
