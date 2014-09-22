@@ -25,9 +25,6 @@ button {
   font-family: Helvetica;
 }
 
-#videos {
-}
-
 #videos li {
   padding: 0.25em 1em;
   list-style: none;
@@ -49,4 +46,17 @@ button {
 
 #videos a li {
   color: black;
+}
+
+aside #videos {
+  float: left;
+  clear: both;
+  width: 33%;
+  border-right: 1px solid darkgray;
+  padding-right: 1em;
+}
+
+#video {
+  float: left;
+  background-color: green;
 }
