@@ -6,6 +6,7 @@ window.App = Ember.Application.create();
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
     this.resource('videos');
+    this.resource('video', { path: 'videos/:video_id' });
   });
   this.resource('authorize');
 });

@@ -27,10 +27,12 @@
 <script type="text/x-handlebars" id="videos">
   <ol id="videos">
     {{#each videos}}
+      {{#link-to 'video' this}}
       <li>
         <img {{bind-attr src=this.snippet.thumbnails.standard.url}}/>
         <span class="description">{{this.snippet.title}}</span>
       </li>
+      {{/link-to}}
     {{/each}}
   </ol>
 </script>

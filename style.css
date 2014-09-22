@@ -46,3 +46,7 @@ button {
   clear: right;
   margin: 0.25em 0.5em;
 }
+
+#videos a li {
+  color: black;
+}
