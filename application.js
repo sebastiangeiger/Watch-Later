@@ -1,5 +1,4 @@
 (function() {
-"use strict";
 
 window.App = Ember.Application.create();
 
@@ -205,7 +204,6 @@ App.AuthorizationGateway = Ember.Object.extend({
 });
 
 App.Video = Ember.Object.extend({
-
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -306,5 +304,18 @@ App.YouTubeApi = Ember.Object.extend({
   }
 
 });
+
+
+// ====== Components ========= //
+App.VideoPlayerComponent = Ember.Component.extend({
+  embedUrl: function(){
+    return "https://www.youtube.com/embed/" + this.get('videoId') + "?enablejsapi=1&origin=chrome-extension://bhflhbmfecbckplkhiggalgalkeambia";
+  }.property('videoId'),
+
+  didInsertElement: function() {
+    //TODO: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+  },
+});
+
 
 })();

@@ -38,7 +38,7 @@
 </script>
 
 <script type="text/x-handlebars" id="components/video-player">
-  <div> youtubeId: {{youtubeId}} </div>
+  <iframe id="player" type="text/html" width="640" height="390" {{bind-attr src=embedUrl}} frameborder="0"></iframe>
 </script>
 
 <script type="text/x-handlebars" id="video">
@@ -46,7 +46,7 @@
     {{render 'videos'}}
   </aside>
   <section id='video'>
-    {{video-player youtubeId=videoId}}
+    {{video-player videoId=videoId}}
   </section>
 </script>
 
@@ -55,5 +55,6 @@
 <script src="bower_components/ember/ember.js"></script>
 <script src="config.js"></script>
 <script src="application.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

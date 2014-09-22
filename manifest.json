@@ -13,5 +13,5 @@
     "https://www.googleapis.com/*"
   ],
   "icons": { "16": "icon-16.png", "128": "icon-128.png" },
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com; object-src 'self'"
 }
