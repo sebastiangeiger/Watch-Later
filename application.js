@@ -204,6 +204,19 @@ App.AuthorizationGateway = Ember.Object.extend({
   }
 });
 
+App.Video = Ember.Object.extend({
+
+});
+App.Video.reopenClass({
+  createFromRawVideo: function(rawVideo){
+    return App.Video.create({
+      id: rawVideo.id,
+      thumbnailUrl: rawVideo.snippet.thumbnails.default.url,
+      title: rawVideo.snippet.title
+    });
+  }
+});
+
 App.VideoList = Ember.Object.extend({
   watchLaterId: null,
   numberOfVideos: 0,
@@ -216,8 +229,11 @@ App.VideoList = Ember.Object.extend({
   },
 
   videos: function(){
-    console.log(this.get('rawVideos')[0]);
-    return this.get('rawVideos').reverse();
+    var videos = this.get('rawVideos').map(function(rawVideo) {
+      return App.Video.createFromRawVideo(rawVideo);
+    });
+    console.log(videos[0]);
+    return videos.reverse();
   }.property('rawVideos'),
 
   getVideos: function(){

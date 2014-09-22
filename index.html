@@ -29,8 +29,8 @@
     {{#each videos}}
       {{#link-to 'video' this}}
       <li>
-        <img {{bind-attr src=this.snippet.thumbnails.standard.url}}/>
-        <span class='description'>{{this.snippet.title}}</span>
+        <img {{bind-attr src=thumbnailUrl}}/>
+        <span class='description'>{{title}}</span>
       </li>
       {{/link-to}}
     {{/each}}
