@@ -38,7 +38,8 @@
 </script>
 
 <script type="text/x-handlebars" id="components/video-player">
-  <iframe id="player" type="text/html" width="640" height="390" {{bind-attr src=embedUrl}} frameborder="0"></iframe>
+  <div id="dummyTarget"></div>
+  <iframe id="youtube-player" frameborder="0" allowfullscreen="1" title="YouTube player" width="640" height="360"></iframe>
 </script>
 
 <script type="text/x-handlebars" id="video">

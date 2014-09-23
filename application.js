@@ -313,8 +313,29 @@ App.VideoPlayerComponent = Ember.Component.extend({
   }.property('videoId'),
 
   didInsertElement: function() {
-    //TODO: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+    this._workaround();
+
+    var player = new window.YT.Player('youtube-player', {
+      events: {
+        'onReady': function(event){
+          event.target.playVideo();
+        },
+        'onStateChange': function(){ console.log("StateChange")},
+      }
+    })
   },
+
+
+  _workaround: function(){
+    //Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+    new window.YT.Player('dummyTarget');
+    var isHttps = $('#dummyTarget').attr('src').indexOf('https') !== -1;
+    $('#dummyTarget').remove();
+
+    var url = isHttps ? 'https' : 'http';
+    url += '://www.youtube.com/embed/'+this.get('videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
+    $('#youtube-player').attr('src', url);
+  }
 });
 
 
