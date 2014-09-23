@@ -27,12 +27,28 @@
 <script type="text/x-handlebars" id="videos">
   <ol id="videos">
     {{#each videos}}
+      {{#link-to 'video' this}}
       <li>
-        <img {{bind-attr src=this.snippet.thumbnails.standard.url}}/>
-        <span class="description">{{this.snippet.title}}</span>
+        <img {{bind-attr src=thumbnailUrl}}/>
+        <span class='description'>{{title}}</span>
       </li>
+      {{/link-to}}
     {{/each}}
   </ol>
+</script>
+
+<script type="text/x-handlebars" id="components/video-player">
+  <div id="dummyTarget"></div>
+  <iframe id="youtube-player" frameborder="0" allowfullscreen="1" title="YouTube player" width="640" height="360"></iframe>
+</script>
+
+<script type="text/x-handlebars" id="video">
+  <aside>
+    {{render 'videos'}}
+  </aside>
+  <section id='video'>
+    {{video-player videoId=videoId}}
+  </section>
 </script>
 
 <script src="bower_components/jquery/dist/jquery.js"></script>
@@ -40,5 +56,6 @@
 <script src="bower_components/ember/ember.js"></script>
 <script src="config.js"></script>
 <script src="application.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

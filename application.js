@@ -1,11 +1,11 @@
 (function() {
-"use strict";
 
 window.App = Ember.Application.create();
 
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
     this.resource('videos');
+    this.resource('video', { path: 'videos/:video_id' });
   });
   this.resource('authorize');
 });
@@ -203,6 +203,19 @@ App.AuthorizationGateway = Ember.Object.extend({
   }
 });
 
+App.Video = Ember.Object.extend({
+});
+App.Video.reopenClass({
+  createFromRawVideo: function(rawVideo){
+    return App.Video.create({
+      id: rawVideo.id,
+      thumbnailUrl: rawVideo.snippet.thumbnails.default.url,
+      title: rawVideo.snippet.title,
+      videoId: rawVideo.snippet.resourceId.videoId
+    });
+  }
+});
+
 App.VideoList = Ember.Object.extend({
   watchLaterId: null,
   numberOfVideos: 0,
@@ -215,8 +228,11 @@ App.VideoList = Ember.Object.extend({
   },
 
   videos: function(){
-    console.log(this.get('rawVideos')[0]);
-    return this.get('rawVideos').reverse();
+    var videos = this.get('rawVideos').map(function(rawVideo) {
+      return App.Video.createFromRawVideo(rawVideo);
+    });
+    console.log(videos[0]);
+    return videos.reverse();
   }.property('rawVideos'),
 
   getVideos: function(){
@@ -288,5 +304,39 @@ App.YouTubeApi = Ember.Object.extend({
   }
 
 });
+
+
+// ====== Components ========= //
+App.VideoPlayerComponent = Ember.Component.extend({
+  embedUrl: function(){
+    return "https://www.youtube.com/embed/" + this.get('videoId') + "?enablejsapi=1&origin=chrome-extension://bhflhbmfecbckplkhiggalgalkeambia";
+  }.property('videoId'),
+
+  didInsertElement: function() {
+    this._workaround();
+
+    var player = new window.YT.Player('youtube-player', {
+      events: {
+        'onReady': function(event){
+          event.target.playVideo();
+        },
+        'onStateChange': function(){ console.log("StateChange")},
+      }
+    })
+  },
+
+
+  _workaround: function(){
+    //Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+    new window.YT.Player('dummyTarget');
+    var isHttps = $('#dummyTarget').attr('src').indexOf('https') !== -1;
+    $('#dummyTarget').remove();
+
+    var url = isHttps ? 'https' : 'http';
+    url += '://www.youtube.com/embed/'+this.get('videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
+    $('#youtube-player').attr('src', url);
+  }
+});
+
 
 })();
