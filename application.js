@@ -312,6 +312,7 @@ App.VideoPlayerComponent = Ember.Component.extend({
     return "https://www.youtube.com/embed/" + this.get('videoId') + "?enablejsapi=1&origin=chrome-extension://bhflhbmfecbckplkhiggalgalkeambia";
   }.property('videoId'),
 
+
   didInsertElement: function() {
     this._workaround();
 
@@ -322,9 +323,17 @@ App.VideoPlayerComponent = Ember.Component.extend({
         },
         'onStateChange': function(){ console.log("StateChange")},
       }
-    })
+    });
+
+    this.set('player', player);
   },
 
+  _setVideo: function(){
+    var player = this.get('player');
+    if(player){
+      player.loadVideoById(this.get('videoId'));
+    }
+  }.observes('videoId'),
 
   _workaround: function(){
     //Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
