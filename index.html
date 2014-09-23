@@ -25,16 +25,24 @@
 </script>
 
 <script type="text/x-handlebars" id="videos">
+  {{videos-list videos=videos}}
+</script>
+
+<script type="text/x-handlebars" id="components/videos-list">
   <ol id="videos">
     {{#each videos}}
-      {{#link-to 'video' this}}
-      <li>
-        <img {{bind-attr src=thumbnailUrl}}/>
-        <span class='description'>{{title}}</span>
-      </li>
-      {{/link-to}}
+      {{videos-list-entry video=this}}
     {{/each}}
   </ol>
+</script>
+
+<script type="text/x-handlebars" id="components/videos-list-entry">
+  {{#link-to 'video' video}}
+  <li {{bind-attr class="video.isSelected"}}>
+    <img {{bind-attr src=video.thumbnailUrl}}/>
+    <span class='description'>{{video.title}}</span>
+  </li>
+  {{/link-to}}
 </script>
 
 <script type="text/x-handlebars" id="components/video-player">
