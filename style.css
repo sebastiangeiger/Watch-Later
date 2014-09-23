@@ -51,7 +51,6 @@ button {
 aside #videos {
   float: left;
   clear: both;
-  width: 33%;
   border-right: 1px solid darkgray;
   padding-right: 1em;
 }

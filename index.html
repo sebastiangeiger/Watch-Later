@@ -43,11 +43,11 @@
 </script>
 
 <script type="text/x-handlebars" id="video">
-  <aside>
+  <aside {{bind-attr style=asideStyle}}>
     {{render 'videos'}}
   </aside>
   <section id='video'>
-    {{video-player videoId=videoId}}
+    {{video-player videoId=videoId height=videoHeight width=videoWidth}}
   </section>
 </script>
 
