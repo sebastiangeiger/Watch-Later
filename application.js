@@ -1,6 +1,7 @@
 (function() {
 
 window.App = Ember.Application.create();
+window.developer_wants_to_keep_his_sanity = true
 
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
@@ -336,7 +337,8 @@ App.VideoPlayerComponent = Ember.Component.extend({
     var player = new window.YT.Player('youtube-player', {
       events: {
         'onReady': function(event){
-          event.target.playVideo();
+        if(!window.developer_wants_to_keep_his_sanity)
+          player.playVideo();
         },
         'onStateChange': function(){ console.log("StateChange")},
       }
@@ -350,6 +352,8 @@ App.VideoPlayerComponent = Ember.Component.extend({
     var player = this.get('player');
     if(player){
       player.loadVideoById(this.get('videoId'));
+      if(window.developer_wants_to_keep_his_sanity)
+        player.pauseVideo();
     }
   }.observes('videoId'),
 
