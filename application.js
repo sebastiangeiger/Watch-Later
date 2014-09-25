@@ -330,18 +330,19 @@ App.VideoRoute = Ember.Route.extend({
 
 App.VideoController = Ember.ObjectController.extend({
   needs: 'videos',
-  videoWidth: function(){
-    return $(window).width()/3*2 - 15;
-  }.property(),
-  videoHeight: function(){
-    return $(window).height() - $('header').outerHeight();
-  }.property(),
-  _setSelectedVideo: function(){
+  _observeSelectedVideo: function(){
     this.get('controllers.videos').model.set('selectedVideo', this.get('content'));
-  }.observes('content')
-
+  }.observes('content'),
 });
 
+App.VideoView = Ember.View.extend({
+  videoHeight: 500,
+  videoWidth: 500,
+  didInsertElement: function(){
+    this.set('videoHeight', $(window).height() - $('header').outerHeight());
+    this.set('videoWidth', $(window).width()/3*2 - 15);
+  }
+});
 
 // ====== Components ========= //
 App.VideoPlayerComponent = Ember.Component.extend({
@@ -394,7 +395,11 @@ App.VideoPlayerComponent = Ember.Component.extend({
     var url = isHttps ? 'https' : 'http';
     url += '://www.youtube.com/embed/'+this.get('video.videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
     $('#youtube-player').attr('src', url);
-  }
+  },
+
+  _observeSize: function(){
+    this.player.setSize(this.get('width'),this.get('height'));
+  }.observes('width','height')
 });
 
 
