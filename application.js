@@ -1,12 +1,18 @@
 (function() {
 
-window.App = Ember.Application.create();
+window.App = Ember.Application.create({
+  LOG_TRANSITIONS: true,
+  LOG_TRANSITIONS_INTERNAL: true,
+  LOG_VIEW_LOOKUPS: true
+});
+
 window.developer_wants_to_keep_his_sanity = true
 
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
-    this.resource('videos');
-    this.resource('video', { path: 'videos/:video_id' });
+    this.resource('videos', function(){
+      this.resource('video', { path: '/:video_id' });
+    });
   });
   this.resource('authorize');
 });
@@ -35,6 +41,8 @@ App.AppRoute = Ember.Route.extend({
     var appModel = this.modelFor('application');
     if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
+    } else {
+      this.transitionTo('videos');
     }
   }
 });

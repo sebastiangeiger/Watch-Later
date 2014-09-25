@@ -26,6 +26,7 @@
 
 <script type="text/x-handlebars" id="videos">
   {{videos-list videos=videos}}
+  {{outlet}}
 </script>
 
 <script type="text/x-handlebars" id="components/videos-list">
@@ -51,9 +52,6 @@
 </script>
 
 <script type="text/x-handlebars" id="video">
-  <aside {{bind-attr style=asideStyle}}>
-    {{render 'videos'}}
-  </aside>
   <section id='video'>
     {{video-player videoId=videoId height=videoHeight width=videoWidth}}
   </section>
