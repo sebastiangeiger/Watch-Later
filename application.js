@@ -194,13 +194,16 @@ App.AuthorizationGateway = Ember.Object.extend({
         dataType: "text"
       })
     }).then(function(payload){
-      // console.log(payload);
       return JSON.parse(payload);
     });
   }
 });
 
 App.Video = Ember.Object.extend({
+  isSelected: false,
+  isSelectedCss: function(){
+    return this.get("isSelected") ?  "selected" : "not-selected"
+  }.property("isSelected")
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -228,7 +231,6 @@ App.VideoList = Ember.Object.extend({
     var videos = this.get('rawVideos').map(function(rawVideo) {
       return App.Video.createFromRawVideo(rawVideo);
     });
-    // console.log(videos[0]);
     return videos.reverse();
   }.property('rawVideos'),
 
@@ -243,7 +245,14 @@ App.VideoList = Ember.Object.extend({
         localStorage.setItem('rawVideos', JSON.stringify(videos));
       });
     }
-  }
+  },
+
+  _selectVideo: function(){
+    this.get('videos').forEach(function(video){
+      video.set('isSelected', false);
+    });
+    this.set('selectedVideo.isSelected', true);
+  }.observes('selectedVideo')
 });
 
 App.YouTubeApi = Ember.Object.extend({
@@ -320,27 +329,22 @@ App.VideoRoute = Ember.Route.extend({
 });
 
 App.VideoController = Ember.ObjectController.extend({
+  needs: 'videos',
   videoWidth: function(){
-    return $(window).width()/4*3 - 15;
+    return $(window).width()/3*2 - 15;
   }.property(),
   videoHeight: function(){
     return $(window).height() - $('header').outerHeight();
   }.property(),
-  asideStyle: function(){
-    return "width: " + this.get('asideWidth') + "px";
-  }.property(),
-  asideWidth: function(){
-    return $(window).width()/4;
-  }.property()
+  _setSelectedVideo: function(){
+    this.get('controllers.videos').model.set('selectedVideo', this.get('content'));
+  }.observes('content')
+
 });
 
 
 // ====== Components ========= //
 App.VideoPlayerComponent = Ember.Component.extend({
-  embedUrl: function(){
-    return "https://www.youtube.com/embed/" + this.get('videoId') + "?enablejsapi=1&origin=chrome-extension://bhflhbmfecbckplkhiggalgalkeambia";
-  }.property('videoId'),
-
   didInsertElement: function() {
 
     var _this = this;
@@ -371,11 +375,15 @@ App.VideoPlayerComponent = Ember.Component.extend({
   _setVideo: function(){
     var player = this.get('player');
     if(player){
-      player.loadVideoById(this.get('videoId'));
+      player.loadVideoById(this.get('video.videoId'));
       if(window.developer_wants_to_keep_his_sanity)
         player.pauseVideo();
-    }
-  }.observes('videoId'),
+    };
+  }.observes('video.videoId'),
+
+  _markAsSelected: function(){
+    this.set('video.isSelected', true);
+  }.observes('video.videoId'),
 
   _workaround: function(){
     // Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
@@ -384,7 +392,7 @@ App.VideoPlayerComponent = Ember.Component.extend({
     $('#dummyTarget').remove();
 
     var url = isHttps ? 'https' : 'http';
-    url += '://www.youtube.com/embed/'+this.get('videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
+    url += '://www.youtube.com/embed/'+this.get('video.videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
     $('#youtube-player').attr('src', url);
   }
 });

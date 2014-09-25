@@ -61,3 +61,7 @@ button {
   background-color: green;
   width: 66%;
 }
+
+#videos li.selected {
+  background-color: darkgray;
+}

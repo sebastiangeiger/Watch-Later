@@ -39,7 +39,7 @@
 
 <script type="text/x-handlebars" id="components/videos-list-entry">
   {{#link-to 'video' video}}
-  <li {{bind-attr class="video.isSelected"}}>
+  <li {{bind-attr class="video.isSelectedCss"}}>
     <img {{bind-attr src=video.thumbnailUrl}}/>
     <span class='description'>{{video.title}}</span>
   </li>
@@ -53,7 +53,7 @@
 
 <script type="text/x-handlebars" id="video">
   <section id='video'>
-    {{video-player videoId=videoId height=videoHeight width=videoWidth}}
+    {{video-player video=this height=videoHeight width=videoWidth}}
   </section>
 </script>
 
