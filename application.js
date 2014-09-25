@@ -25,16 +25,15 @@ App.ApplicationRoute = Ember.Route.extend({
   }
 });
 
-App.ApplicationController = Ember.ObjectController.extend({
-});
-
-
 App.AppRoute = Ember.Route.extend({
+  model: function(){
+    var state = this.modelFor('application');
+    var connection = App.AuthorizedConnection.create({authorizationState: state});
+    return App.VideoList.create({authorizedConnection: connection});
+  },
   afterModel: function(model, transition){
     var appModel = this.modelFor('application');
-    if(appModel.get('fullyAuthorized')){
-      this.transitionTo('videos');
-    } else if (appModel.get('needsAuthCode')) {
+    if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
     }
   }
@@ -71,16 +70,7 @@ App.AuthorizeRoute = Ember.Route.extend({
   }
 });
 
-
-App.VideosRoute = Ember.Route.extend({
-  model: function(){
-    var state = this.modelFor('application');
-    var connection = App.AuthorizedConnection.create({authorizationState: state});
-    return App.VideoList.create({authorizedConnection: connection});
-  }
-});
-
-
+//
 // ====== Models ========= //
 App.AuthorizationState = Ember.Object.extend({
 
@@ -306,7 +296,21 @@ App.YouTubeApi = Ember.Object.extend({
 
 });
 
+App.VideosRoute = Ember.Route.extend({
+  model: function(){
+    console.log("VideoSRoute");
+    return this.modelFor('app');
+  }
+});
+
 App.VideosController = Ember.ObjectController.extend({
+});
+
+App.VideoRoute = Ember.Route.extend({
+  model: function(params){
+    console.log("VideoRoute");
+    this.modelFor('app').get('videos').findBy('id', params["video_id"])
+  }
 });
 
 App.VideoController = Ember.ObjectController.extend({
