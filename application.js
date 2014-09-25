@@ -6,7 +6,7 @@ window.App = Ember.Application.create({
   LOG_VIEW_LOOKUPS: true
 });
 
-window.developer_wants_to_keep_his_sanity = true
+window.developer_wants_to_keep_his_sanity = false;
 
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
@@ -41,8 +41,6 @@ App.AppRoute = Ember.Route.extend({
     var appModel = this.modelFor('application');
     if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
-    } else {
-      this.transitionTo('videos');
     }
   }
 });
@@ -317,7 +315,7 @@ App.VideosController = Ember.ObjectController.extend({
 App.VideoRoute = Ember.Route.extend({
   model: function(params){
     console.log("VideoRoute");
-    this.modelFor('app').get('videos').findBy('id', params["video_id"])
+    return this.modelFor('app').get('videos').findBy('id', params["video_id"])
   }
 });
 
@@ -344,20 +342,30 @@ App.VideoPlayerComponent = Ember.Component.extend({
   }.property('videoId'),
 
   didInsertElement: function() {
-    this._workaround();
 
-    var player = new window.YT.Player('youtube-player', {
-      events: {
-        'onReady': function(event){
-        if(!window.developer_wants_to_keep_his_sanity)
-          player.playVideo();
-        },
-        'onStateChange': function(){ console.log("StateChange")},
-      }
-    });
+    var _this = this;
+    var initializePlayer = function(){
+      _this._workaround();
 
-    player.setSize(this.get('width'),this.get('height'));
-    this.set('player', player);
+      var player = new window.YT.Player('youtube-player', {
+        events: {
+          'onReady': function(event){
+            if(!window.developer_wants_to_keep_his_sanity)
+              player.playVideo();
+          },
+          'onStateChange': function(){ console.log("StateChange")},
+        }
+      });
+
+      player.setSize(_this.get('width'),_this.get('height'));
+      _this.set('player', player);
+    };
+
+    if(window.YT.Player){
+      initializePlayer()
+    } else {
+      window.onYouTubePlayerAPIReady = initializePlayer;
+    }
   },
 
   _setVideo: function(){
@@ -370,7 +378,7 @@ App.VideoPlayerComponent = Ember.Component.extend({
   }.observes('videoId'),
 
   _workaround: function(){
-    //Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+    // Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
     new window.YT.Player('dummyTarget');
     var isHttps = $('#dummyTarget').attr('src').indexOf('https') !== -1;
     $('#dummyTarget').remove();
