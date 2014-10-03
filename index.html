@@ -39,7 +39,7 @@
 
 <script type="text/x-handlebars" id="components/videos-list-entry">
   {{#link-to 'video' video}}
-  <li {{bind-attr class="video.isSelectedCss"}}>
+  <li {{bind-attr class="isSelectedCss"}}>
     <img {{bind-attr src=video.thumbnailUrl}}/>
     <span class='description'>{{video.title}}</span>
   </li>

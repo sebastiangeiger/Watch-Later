@@ -201,9 +201,6 @@ App.AuthorizationGateway = Ember.Object.extend({
 
 App.Video = Ember.Object.extend({
   isSelected: false,
-  isSelectedCss: function(){
-    return this.get("isSelected") ?  "selected" : "not-selected"
-  }.property("isSelected")
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -345,6 +342,12 @@ App.VideoView = Ember.View.extend({
 });
 
 // ====== Components ========= //
+App.VideosListEntryComponent = Ember.Component.extend({
+    isSelectedCss: function(){
+      return this.get("video.isSelected") ?  "selected" : "not-selected"
+    }.property("video.isSelected"),
+});
+
 App.VideoPlayerComponent = Ember.Component.extend({
   didInsertElement: function() {
 
