@@ -1,11 +1,18 @@
 (function() {
 
-window.App = Ember.Application.create();
+window.App = Ember.Application.create({
+  LOG_TRANSITIONS: true,
+  LOG_TRANSITIONS_INTERNAL: true,
+  LOG_VIEW_LOOKUPS: true
+});
+
+window.developer_wants_to_keep_his_sanity = true;
 
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
-    this.resource('videos');
-    this.resource('video', { path: 'videos/:video_id' });
+    this.resource('videos', function(){
+      this.resource('video', { path: '/:video_id' });
+    });
   });
   this.resource('authorize');
 });
@@ -24,16 +31,15 @@ App.ApplicationRoute = Ember.Route.extend({
   }
 });
 
-App.ApplicationController = Ember.ObjectController.extend({
-});
-
-
 App.AppRoute = Ember.Route.extend({
+  model: function(){
+    var state = this.modelFor('application');
+    var connection = App.AuthorizedConnection.create({authorizationState: state});
+    return App.VideoList.create({authorizedConnection: connection});
+  },
   afterModel: function(model, transition){
     var appModel = this.modelFor('application');
-    if(appModel.get('fullyAuthorized')){
-      this.transitionTo('videos');
-    } else if (appModel.get('needsAuthCode')) {
+    if (appModel.get('needsAuthCode')) {
       this.transitionTo('authorize');
     }
   }
@@ -70,16 +76,7 @@ App.AuthorizeRoute = Ember.Route.extend({
   }
 });
 
-
-App.VideosRoute = Ember.Route.extend({
-  model: function(){
-    var state = this.modelFor('application');
-    var connection = App.AuthorizedConnection.create({authorizationState: state});
-    return App.VideoList.create({authorizedConnection: connection});
-  }
-});
-
-
+//
 // ====== Models ========= //
 App.AuthorizationState = Ember.Object.extend({
 
@@ -197,13 +194,29 @@ App.AuthorizationGateway = Ember.Object.extend({
         dataType: "text"
       })
     }).then(function(payload){
-      // console.log(payload);
       return JSON.parse(payload);
     });
   }
 });
 
 App.Video = Ember.Object.extend({
+  isSelected: false,
+  playbackStatus: "UNSTARTED",
+  isPlaying: function(){
+    return this.get('playbackStatus') === "PLAYING";
+  }.property("playbackStatus"),
+  isBuffering: function(){
+    return this.get('playbackStatus') === "BUFFERING";
+  }.property("playbackStatus"),
+  playedPercentage: function(currentTime,duration){
+    var currentTime = this.get('currentTime');
+    var duration    = this.get('duration');
+    if(currentTime && duration) {
+      return Math.round(currentTime/duration*100);
+    } else {
+      return 0;
+    }
+  }.property('currentTime','duration')
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -231,7 +244,6 @@ App.VideoList = Ember.Object.extend({
     var videos = this.get('rawVideos').map(function(rawVideo) {
       return App.Video.createFromRawVideo(rawVideo);
     });
-    // console.log(videos[0]);
     return videos.reverse();
   }.property('rawVideos'),
 
@@ -246,7 +258,14 @@ App.VideoList = Ember.Object.extend({
         localStorage.setItem('rawVideos', JSON.stringify(videos));
       });
     }
-  }
+  },
+
+  _selectVideo: function(){
+    this.get('videos').forEach(function(video){
+      video.set('isSelected', false);
+    });
+    this.set('selectedVideo.isSelected', true);
+  }.observes('selectedVideo')
 });
 
 App.YouTubeApi = Ember.Object.extend({
@@ -305,64 +324,153 @@ App.YouTubeApi = Ember.Object.extend({
 
 });
 
+App.VideosRoute = Ember.Route.extend({
+  model: function(){
+    console.log("VideoSRoute");
+    return this.modelFor('app');
+  }
+});
+
 App.VideosController = Ember.ObjectController.extend({
 });
 
-App.VideoController = Ember.ObjectController.extend({
-  videoWidth: function(){
-    return $(window).width()/4*3 - 15;
-  }.property(),
-  videoHeight: function(){
-    return $(window).height() - $('header').outerHeight();
-  }.property(),
-  asideStyle: function(){
-    return "width: " + this.get('asideWidth') + "px";
-  }.property(),
-  asideWidth: function(){
-    return $(window).width()/4;
-  }.property()
+App.VideoRoute = Ember.Route.extend({
+  model: function(params){
+    console.log("VideoRoute");
+    return this.modelFor('app').get('videos').findBy('id', params["video_id"])
+  }
 });
 
+App.VideoController = Ember.ObjectController.extend({
+  needs: 'videos',
+  _observeSelectedVideo: function(){
+    this.get('controllers.videos').model.set('selectedVideo', this.get('content'));
+  }.observes('content'),
+});
+
+App.VideoView = Ember.View.extend({
+  videoHeight: 500,
+  videoWidth: 500,
+  didInsertElement: function(){
+    this.set('videoHeight', $(window).height() - $('header').outerHeight());
+    this.set('videoWidth', $(window).width()/3*2 - 15);
+  }
+});
 
 // ====== Components ========= //
-App.VideoPlayerComponent = Ember.Component.extend({
-  embedUrl: function(){
-    return "https://www.youtube.com/embed/" + this.get('videoId') + "?enablejsapi=1&origin=chrome-extension://bhflhbmfecbckplkhiggalgalkeambia";
-  }.property('videoId'),
-
-  didInsertElement: function() {
-    this._workaround();
-
-    var player = new window.YT.Player('youtube-player', {
-      events: {
-        'onReady': function(event){
-          event.target.playVideo();
-        },
-        'onStateChange': function(){ console.log("StateChange")},
+App.VideosListEntryComponent = Ember.Component.extend({
+    isSelectedCss: function(){
+      return this.get("video.isSelected") ?  "selected" : "not-selected"
+    }.property("video.isSelected"),
+    isSelectedAndIsPlaying: function(){
+      if(this.get('video.isSelected')){
+        if (this.get('video.isPlaying') || this.get('video.isBuffering')){
+          return "||" ;
+        } else {
+          return ">";
+        }
+      } else {
+        return "";
       }
-    });
+    }.property('video.isSelected', 'video.isPlaying'),
+    playedPercentage: function(){
+      if(this.get('video.isSelected')){
+        return this.get('video.playedPercentage') + "%";
+      } else {
+        return "";
+      }
+    }.property('video.isSelected', 'video.playedPercentage'),
+});
 
-    player.setSize(this.get('width'),this.get('height'));
-    this.set('player', player);
+App.VideoPlayerComponent = Ember.Component.extend({
+  didInsertElement: function() {
+
+    var _this = this;
+    var initializePlayer = function(){
+      _this._workaround();
+
+      var player = new window.YT.Player('youtube-player', {
+        events: {
+          'onReady': function(event){
+            player.playVideo();
+            if(window.developer_wants_to_keep_his_sanity)
+              player.mute();
+          },
+          'onStateChange': function(event){
+            _this.set('playbackStatus', player.getPlayerState());
+          },
+        }
+      });
+
+      setInterval(function(){
+        _this.set('video.duration',player.getDuration());
+        _this.set('video.currentTime',player.getCurrentTime());
+      }, 500);
+
+      player.setSize(_this.get('width'),_this.get('height'));
+
+      _this.set('player', player);
+    };
+
+    if(window.YT.Player){
+      initializePlayer()
+    } else {
+      window.onYouTubePlayerAPIReady = initializePlayer;
+    }
   },
+
+  _setPlaybackStatus: function(){
+    var newState = null;
+    switch(this.get('playbackStatus')){
+      case YT.PlayerState.UNSTARTED:
+        newState = "UNSTARTED";
+        break;
+      case YT.PlayerState.ENDED:
+        newState = "ENDED";
+        break;
+      case YT.PlayerState.PLAYING:
+        newState = "PLAYING";
+        break;
+      case YT.PlayerState.PAUSED:
+        newState = "PAUSED";
+        break;
+      case YT.PlayerState.BUFFERING:
+        newState = "BUFFERING";
+        break;
+      case YT.PlayerState.CUED:
+        newState = "CUED";
+        break;
+      default:
+        newState = null;
+    }
+    if(newState) {
+      this.set('video.playbackStatus', newState);
+    }
+  }.observes('playbackStatus'),
 
   _setVideo: function(){
     var player = this.get('player');
     if(player){
-      player.loadVideoById(this.get('videoId'));
-    }
-  }.observes('videoId'),
+      player.loadVideoById(this.get('video.videoId'));
+      if(window.developer_wants_to_keep_his_sanity)
+        player.mute();
+    };
+  }.observes('video.videoId'),
+
+  _markAsSelected: function(){
+    this.set('video.isSelected', true);
+  }.observes('video.videoId'),
 
   _workaround: function(){
-    //Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
+    // Workaround: http://stackoverflow.com/questions/21758040/youtube-iframe-api-onready-not-firing-for-chrome-extension
     new window.YT.Player('dummyTarget');
     var isHttps = $('#dummyTarget').attr('src').indexOf('https') !== -1;
     $('#dummyTarget').remove();
 
     var url = isHttps ? 'https' : 'http';
-    url += '://www.youtube.com/embed/'+this.get('videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
+    url += '://www.youtube.com/embed/'+this.get('video.videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
     $('#youtube-player').attr('src', url);
-  }
+  },
 });
 
 

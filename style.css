@@ -48,14 +48,19 @@ button {
   color: black;
 }
 
-aside #videos {
+#videos {
   float: left;
   clear: both;
   border-right: 1px solid darkgray;
   padding-right: 1em;
+  width: 33%;
 }
 
 #video {
   float: left;
-  background-color: green;
+  width: 66%;
+}
+
+#videos li.selected {
+  background-color: darkgray;
 }
