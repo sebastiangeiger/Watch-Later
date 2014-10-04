@@ -41,7 +41,10 @@
   {{#link-to 'video' video}}
   <li {{bind-attr class="isSelectedCss"}}>
     <img {{bind-attr src=video.thumbnailUrl}}/>
-    <span class='description'>{{video.title}}</span>
+    <span class='description'>
+      {{video.title}}<br>
+      {{isSelectedAndIsPlaying}}<br>
+    </span>
   </li>
   {{/link-to}}
 </script>

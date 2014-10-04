@@ -201,6 +201,13 @@ App.AuthorizationGateway = Ember.Object.extend({
 
 App.Video = Ember.Object.extend({
   isSelected: false,
+  playbackStatus: "UNSTARTED",
+  isPlaying: function(){
+    return this.get('playbackStatus') === "PLAYING";
+  }.property("playbackStatus"),
+  isBuffering: function(){
+    return this.get('playbackStatus') === "BUFFERING";
+  }.property("playbackStatus"),
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -346,6 +353,17 @@ App.VideosListEntryComponent = Ember.Component.extend({
     isSelectedCss: function(){
       return this.get("video.isSelected") ?  "selected" : "not-selected"
     }.property("video.isSelected"),
+    isSelectedAndIsPlaying: function(){
+      if(this.get('video.isSelected')){
+        if (this.get('video.isPlaying') || this.get('video.isBuffering')){
+          return "||" ;
+        } else {
+          return ">";
+        }
+      } else {
+        return "";
+      }
+    }.property('video.isSelected', 'video.isPlaying'),
 });
 
 App.VideoPlayerComponent = Ember.Component.extend({
@@ -362,7 +380,9 @@ App.VideoPlayerComponent = Ember.Component.extend({
             if(window.developer_wants_to_keep_his_sanity)
               player.mute();
           },
-          'onStateChange': function(){ console.log("StateChange")},
+          'onStateChange': function(event){
+            _this.set('playbackStatus', player.getPlayerState());
+          },
         }
       });
 
@@ -376,6 +396,35 @@ App.VideoPlayerComponent = Ember.Component.extend({
       window.onYouTubePlayerAPIReady = initializePlayer;
     }
   },
+
+  _setPlaybackStatus: function(){
+    var newState = null;
+    switch(this.get('playbackStatus')){
+      case YT.PlayerState.UNSTARTED:
+        newState = "UNSTARTED";
+        break;
+      case YT.PlayerState.ENDED:
+        newState = "ENDED";
+        break;
+      case YT.PlayerState.PLAYING:
+        newState = "PLAYING";
+        break;
+      case YT.PlayerState.PAUSED:
+        newState = "PAUSED";
+        break;
+      case YT.PlayerState.BUFFERING:
+        newState = "BUFFERING";
+        break;
+      case YT.PlayerState.CUED:
+        newState = "CUED";
+        break;
+      default:
+        newState = null;
+    }
+    if(newState) {
+      this.set('video.playbackStatus', newState);
+    }
+  }.observes('playbackStatus'),
 
   _setVideo: function(){
     var player = this.get('player');
