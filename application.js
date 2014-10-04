@@ -471,10 +471,6 @@ App.VideoPlayerComponent = Ember.Component.extend({
     url += '://www.youtube.com/embed/'+this.get('video.videoId')+'?enablejsapi=1&origin=chrome-extension:\\\\hmomohnlpaeihbomcdahmmdkopnhfbga';
     $('#youtube-player').attr('src', url);
   },
-
-  _observeSize: function(){
-    this.player.setSize(this.get('width'),this.get('height'));
-  }.observes('width','height')
 });
 
 
