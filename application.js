@@ -208,6 +208,15 @@ App.Video = Ember.Object.extend({
   isBuffering: function(){
     return this.get('playbackStatus') === "BUFFERING";
   }.property("playbackStatus"),
+  playedPercentage: function(currentTime,duration){
+    var currentTime = this.get('currentTime');
+    var duration    = this.get('duration');
+    if(currentTime && duration) {
+      return Math.round(currentTime/duration*100);
+    } else {
+      return 0;
+    }
+  }.property('currentTime','duration')
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -364,6 +373,13 @@ App.VideosListEntryComponent = Ember.Component.extend({
         return "";
       }
     }.property('video.isSelected', 'video.isPlaying'),
+    playedPercentage: function(){
+      if(this.get('video.isSelected')){
+        return this.get('video.playedPercentage') + "%";
+      } else {
+        return "";
+      }
+    }.property('video.isSelected', 'video.playedPercentage'),
 });
 
 App.VideoPlayerComponent = Ember.Component.extend({
@@ -386,7 +402,13 @@ App.VideoPlayerComponent = Ember.Component.extend({
         }
       });
 
+      setInterval(function(){
+        _this.set('video.duration',player.getDuration());
+        _this.set('video.currentTime',player.getCurrentTime());
+      }, 500);
+
       player.setSize(_this.get('width'),_this.get('height'));
+
       _this.set('player', player);
     };
 
