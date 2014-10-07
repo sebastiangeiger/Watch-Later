@@ -1,4 +1,8 @@
 (function() {
+$(document).keypress(function(e) {
+  var noop = function(){};
+  Ember.Instrumentation.instrument("globalKeys.keyPressed", e.which, noop);
+});
 
 window.App = Ember.Application.create({
   LOG_TRANSITIONS: true,
@@ -30,6 +34,10 @@ App.ApplicationRoute = Ember.Route.extend({
     }
   }
 });
+
+App.ApplicationController = Ember.ObjectController.extend({
+  lastKeyPressed: 'none'
+})
 
 App.AppRoute = Ember.Route.extend({
   model: function(){
@@ -328,10 +336,35 @@ App.VideosRoute = Ember.Route.extend({
   model: function(){
     console.log("VideoSRoute");
     return this.modelFor('app');
+  },
+  setupController: function (controller, model) {
+    this._super(controller,model);
+    Ember.Instrumentation.subscribe("globalKeys.keyPressed", {
+      before: function(name, timestamp, keyChar) {
+        controller.send('keyPressed', keyChar);
+      },
+      after: function() {}
+    });
   }
 });
 
+function Key(keyChar){
+  this.is_a = function(character){
+    return (keyChar == character.charCodeAt(0));
+  }
+}
+
 App.VideosController = Ember.ObjectController.extend({
+  actions: {
+    keyPressed: function(keyChar){
+      var key = new Key(keyChar);
+      if(key.is_a('j')){
+        console.log("select next");
+      } else if(key.is_a('k')) {
+        console.log("select previous");
+      }
+    }
+  }
 });
 
 App.VideoRoute = Ember.Route.extend({
