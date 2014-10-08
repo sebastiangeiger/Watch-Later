@@ -35,10 +35,6 @@ App.ApplicationRoute = Ember.Route.extend({
   }
 });
 
-App.ApplicationController = Ember.ObjectController.extend({
-  lastKeyPressed: 'none'
-})
-
 App.AppRoute = Ember.Route.extend({
   model: function(){
     var state = this.modelFor('application');
@@ -344,7 +340,7 @@ App.VideosRoute = Ember.Route.extend({
 });
 
 function Key(keyChar){
-  this.is_a = function(character){
+  this.isA = function(character){
     return (keyChar == character.charCodeAt(0));
   }
 }
@@ -358,9 +354,9 @@ App.VideosController = Ember.ObjectController.extend({
   actions: {
     keyPressed: function(keyChar){
       var key = new Key(keyChar);
-      if(key.is_a('j')){
+      if(key.isA('j')){
         this.selectNext();
-      } else if(key.is_a('k')) {
+      } else if(key.isA('k')) {
         this.selectPrevious();
       }
     }
