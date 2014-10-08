@@ -207,6 +207,7 @@ App.Video = Ember.Object.extend({
   isSelected: false,
   isDisplayed: false,
   playbackStatus: "UNSTARTED",
+  desiredPlaybackStatus: "PLAYING",
   isPlaying: function(){
     return this.get('playbackStatus') === "PLAYING";
   }.property("playbackStatus"),
@@ -221,7 +222,15 @@ App.Video = Ember.Object.extend({
     } else {
       return 0;
     }
-  }.property('currentTime','duration')
+  }.property('currentTime','duration'),
+  togglePlayPause: function(){
+    if(this.get('isPlaying')){
+      this.set('desiredPlaybackStatus', "PAUSED")
+    } else {
+      this.set('desiredPlaybackStatus', "PLAYING")
+    }
+  }
+
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -351,7 +360,8 @@ function Key(keyChar){
     if(query.length == 1){
       return (keyChar == query.charCodeAt(0));
     } else {
-      return (query === 'enter' && keyChar == 13);
+      return (query === 'enter' && keyChar == 13) ||
+             (query === 'space' && keyChar == 32);
     }
   }
 }
@@ -371,6 +381,11 @@ App.VideosController = Ember.ObjectController.extend({
         this.selectPrevious();
       } else if(key.is('enter')) {
         this.displayVideo();
+      } else if(key.is('space')) {
+        var displayedVideo = this.get('displayedVideo');
+        if(displayedVideo){
+          displayedVideo.togglePlayPause();
+        }
       }
     }
   },
@@ -500,6 +515,15 @@ App.VideoPlayerComponent = Ember.Component.extend({
       window.onYouTubePlayerAPIReady = initializePlayer;
     }
   },
+
+  _observeDesiredPlaybackStatus: function(){
+    var newStatus = this.get('video.desiredPlaybackStatus')
+    if(newStatus === "PLAYING" ){
+      this.get('player').playVideo();
+    } else if(newStatus === "PAUSED" ) {
+      this.get('player').pauseVideo();
+    }
+  }.observes('video.desiredPlaybackStatus'),
 
   _setPlaybackStatus: function(){
     var newState = null;
