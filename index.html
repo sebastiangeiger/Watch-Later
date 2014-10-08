@@ -39,7 +39,7 @@
 
 <script type="text/x-handlebars" id="components/videos-list-entry">
   {{#link-to 'video' video}}
-  <li {{bind-attr class="isDisplayedCss"}}>
+  <li {{bind-attr class="computedCss"}}>
     <img {{bind-attr src=video.thumbnailUrl}}/>
     <span class='description'>
       {{video.title}}<br>

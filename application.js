@@ -208,6 +208,7 @@ App.AuthorizationGateway = Ember.Object.extend({
 });
 
 App.Video = Ember.Object.extend({
+  isSelected: false,
   isDisplayed: false,
   playbackStatus: "UNSTARTED",
   isPlaying: function(){
@@ -238,6 +239,7 @@ App.Video.reopenClass({
 });
 
 App.VideoList = Ember.Object.extend({
+  //TODO: This sounds less and less like a model and more like a data adapter
   watchLaterId: null,
   numberOfVideos: 0,
   rawVideos: [],
@@ -348,17 +350,32 @@ function Key(keyChar){
 }
 
 App.VideosController = Ember.ObjectController.extend({
+
   displayedVideo: null,
+  selectedVideo: null,
+  selectedVideoIndex: -1,
 
   actions: {
     keyPressed: function(keyChar){
       var key = new Key(keyChar);
       if(key.is_a('j')){
-        console.log("select next");
+        this.selectNext();
       } else if(key.is_a('k')) {
-        console.log("select previous");
+        this.selectPrevious();
       }
     }
+  },
+
+  selectNext: function(){
+    var index = this.get('selectedVideoIndex');
+    var newIndex = Math.min(index+1, this.get('videos').length-1);
+    this.set('selectedVideoIndex', newIndex);
+  },
+
+  selectPrevious: function(){
+    var index = this.get('selectedVideoIndex');
+    var newIndex = Math.max(index-1, 0);
+    this.set('selectedVideoIndex', newIndex);
   },
 
   _observeDisplayedVideo: function(){
@@ -366,7 +383,16 @@ App.VideosController = Ember.ObjectController.extend({
       video.set('isDisplayed', false);
     });
     this.set('displayedVideo.isDisplayed', true);
-  }.observes('displayedVideo')
+  }.observes('displayedVideo'),
+
+  _observeSelectedVideo: function(){
+    var selectedVideo = this.get('videos')[this.get('selectedVideoIndex')];
+    this.set('selectedVideo', selectedVideo);
+    this.get('videos').forEach(function(video){
+      video.set('isSelected', false);
+    });
+    this.set('selectedVideo.isSelected', true);
+  }.observes('selectedVideoIndex')
 });
 
 App.VideoRoute = Ember.Route.extend({
@@ -397,6 +423,12 @@ App.VideosListEntryComponent = Ember.Component.extend({
     isDisplayedCss: function(){
       return this.get("video.isDisplayed") ?  "displayed" : "not-displayed"
     }.property("video.isDisplayed"),
+    isSelectedCss: function(){
+      return this.get("video.isSelected") ?  "selected" : "not-selected"
+    }.property("video.isSelected"),
+    computedCss: function(){
+      return this.get("isSelectedCss") + " " + this.get("isDisplayedCss");
+    }.property("isSelectedCss","isDisplayedCss"),
     isDisplayedAndIsPlaying: function(){
       if(this.get('video.isDisplayed')){
         if (this.get('video.isPlaying') || this.get('video.isBuffering')){
@@ -438,8 +470,10 @@ App.VideoPlayerComponent = Ember.Component.extend({
       });
 
       setInterval(function(){
-        _this.set('video.duration',player.getDuration());
-        _this.set('video.currentTime',player.getCurrentTime());
+        if(player && player.getDuration && player.getCurrentTime){
+          _this.set('video.duration',player.getDuration());
+          _this.set('video.currentTime',player.getCurrentTime());
+        }
       }, 500);
 
       player.setSize(_this.get('width'),_this.get('height'));

@@ -64,3 +64,10 @@ button {
 #videos li.displayed {
   background-color: rgb(204,141,143);
 }
+
+#videos li.selected {
+  background-color: darkgray;
+}
+#videos li.selected.displayed {
+  background-color: rgb(204,24,30);
+}
