@@ -208,7 +208,7 @@ App.AuthorizationGateway = Ember.Object.extend({
 });
 
 App.Video = Ember.Object.extend({
-  isSelected: false,
+  isDisplayed: false,
   playbackStatus: "UNSTARTED",
   isPlaying: function(){
     return this.get('playbackStatus') === "PLAYING";
@@ -268,12 +268,12 @@ App.VideoList = Ember.Object.extend({
     }
   },
 
-  _selectVideo: function(){
+  _displayVideo: function(){
     this.get('videos').forEach(function(video){
-      video.set('isSelected', false);
+      video.set('isDisplayed', false);
     });
-    this.set('selectedVideo.isSelected', true);
-  }.observes('selectedVideo')
+    this.set('displayedVideo.isDisplayed', true);
+  }.observes('displayedVideo')
 });
 
 App.YouTubeApi = Ember.Object.extend({
@@ -376,8 +376,8 @@ App.VideoRoute = Ember.Route.extend({
 
 App.VideoController = Ember.ObjectController.extend({
   needs: 'videos',
-  _observeSelectedVideo: function(){
-    this.get('controllers.videos').model.set('selectedVideo', this.get('content'));
+  _observeDisplayedVideo: function(){
+    this.get('controllers.videos').model.set('displayedVideo', this.get('content'));
   }.observes('content'),
 });
 
@@ -392,11 +392,11 @@ App.VideoView = Ember.View.extend({
 
 // ====== Components ========= //
 App.VideosListEntryComponent = Ember.Component.extend({
-    isSelectedCss: function(){
-      return this.get("video.isSelected") ?  "selected" : "not-selected"
-    }.property("video.isSelected"),
-    isSelectedAndIsPlaying: function(){
-      if(this.get('video.isSelected')){
+    isDisplayedCss: function(){
+      return this.get("video.isDisplayed") ?  "displayed" : "not-displayed"
+    }.property("video.isDisplayed"),
+    isDisplayedAndIsPlaying: function(){
+      if(this.get('video.isDisplayed')){
         if (this.get('video.isPlaying') || this.get('video.isBuffering')){
           return "||" ;
         } else {
@@ -405,14 +405,14 @@ App.VideosListEntryComponent = Ember.Component.extend({
       } else {
         return "";
       }
-    }.property('video.isSelected', 'video.isPlaying'),
+    }.property('video.isDisplayed', 'video.isPlaying'),
     playedPercentage: function(){
-      if(this.get('video.isSelected')){
+      if(this.get('video.isDisplayed')){
         return this.get('video.playedPercentage') + "%";
       } else {
         return "";
       }
-    }.property('video.isSelected', 'video.playedPercentage'),
+    }.property('video.isDisplayed', 'video.playedPercentage'),
 });
 
 App.VideoPlayerComponent = Ember.Component.extend({
@@ -490,8 +490,8 @@ App.VideoPlayerComponent = Ember.Component.extend({
     };
   }.observes('video.videoId'),
 
-  _markAsSelected: function(){
-    this.set('video.isSelected', true);
+  _markAsDisplayed: function(){
+    this.set('video.isDisplayed', true);
   }.observes('video.videoId'),
 
   _workaround: function(){
