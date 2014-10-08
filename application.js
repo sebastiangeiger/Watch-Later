@@ -2,6 +2,7 @@
 $(document).keypress(function(e) {
   var noop = function(){};
   Ember.Instrumentation.instrument("globalKeys.keyPressed", e.which, noop);
+  return false;
 });
 
 window.App = Ember.Application.create({
