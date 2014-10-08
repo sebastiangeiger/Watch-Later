@@ -267,13 +267,6 @@ App.VideoList = Ember.Object.extend({
       });
     }
   },
-
-  _displayVideo: function(){
-    this.get('videos').forEach(function(video){
-      video.set('isDisplayed', false);
-    });
-    this.set('displayedVideo.isDisplayed', true);
-  }.observes('displayedVideo')
 });
 
 App.YouTubeApi = Ember.Object.extend({
@@ -355,6 +348,8 @@ function Key(keyChar){
 }
 
 App.VideosController = Ember.ObjectController.extend({
+  displayedVideo: null,
+
   actions: {
     keyPressed: function(keyChar){
       var key = new Key(keyChar);
@@ -364,7 +359,14 @@ App.VideosController = Ember.ObjectController.extend({
         console.log("select previous");
       }
     }
-  }
+  },
+
+  _observeDisplayedVideo: function(){
+    this.get('videos').forEach(function(video){
+      video.set('isDisplayed', false);
+    });
+    this.set('displayedVideo.isDisplayed', true);
+  }.observes('displayedVideo')
 });
 
 App.VideoRoute = Ember.Route.extend({
@@ -377,7 +379,7 @@ App.VideoRoute = Ember.Route.extend({
 App.VideoController = Ember.ObjectController.extend({
   needs: 'videos',
   _observeDisplayedVideo: function(){
-    this.get('controllers.videos').model.set('displayedVideo', this.get('content'));
+    this.get('controllers.videos').set('displayedVideo', this.get('content'));
   }.observes('content'),
 });
 
