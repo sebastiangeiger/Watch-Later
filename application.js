@@ -328,6 +328,13 @@ App.VideosRoute = Ember.Route.extend({
     console.log("VideoSRoute");
     return this.modelFor('app');
   },
+
+  actions: {
+    changeVideo: function(id){
+      this.transitionTo('video', id);
+    }
+  },
+
   setupController: function (controller, model) {
     this._super(controller,model);
     Ember.Instrumentation.subscribe("globalKeys.keyPressed", {
@@ -340,8 +347,12 @@ App.VideosRoute = Ember.Route.extend({
 });
 
 function Key(keyChar){
-  this.isA = function(character){
-    return (keyChar == character.charCodeAt(0));
+  this.is = function(query){
+    if(query.length == 1){
+      return (keyChar == query.charCodeAt(0));
+    } else {
+      return (query === 'enter' && keyChar == 13);
+    }
   }
 }
 
@@ -354,10 +365,12 @@ App.VideosController = Ember.ObjectController.extend({
   actions: {
     keyPressed: function(keyChar){
       var key = new Key(keyChar);
-      if(key.isA('j')){
+      if(key.is('j')){
         this.selectNext();
-      } else if(key.isA('k')) {
+      } else if(key.is('k')) {
         this.selectPrevious();
+      } else if(key.is('enter')) {
+        this.displayVideo();
       }
     }
   },
@@ -372,6 +385,10 @@ App.VideosController = Ember.ObjectController.extend({
     var index = this.get('selectedVideoIndex');
     var newIndex = Math.max(index-1, 0);
     this.set('selectedVideoIndex', newIndex);
+  },
+
+  displayVideo: function(){
+    this.send('changeVideo', this.get('selectedVideo.id'));
   },
 
   _observeDisplayedVideo: function(){
