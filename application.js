@@ -1,4 +1,8 @@
 (function() {
+$(document).keypress(function(e) {
+  var noop = function(){};
+  Ember.Instrumentation.instrument("globalKeys.keyPressed", e.which, noop);
+});
 
 window.App = Ember.Application.create({
   LOG_TRANSITIONS: true,
@@ -201,7 +205,9 @@ App.AuthorizationGateway = Ember.Object.extend({
 
 App.Video = Ember.Object.extend({
   isSelected: false,
+  isDisplayed: false,
   playbackStatus: "UNSTARTED",
+  desiredPlaybackStatus: "PLAYING",
   isPlaying: function(){
     return this.get('playbackStatus') === "PLAYING";
   }.property("playbackStatus"),
@@ -216,7 +222,15 @@ App.Video = Ember.Object.extend({
     } else {
       return 0;
     }
-  }.property('currentTime','duration')
+  }.property('currentTime','duration'),
+  togglePlayPause: function(){
+    if(this.get('isPlaying')){
+      this.set('desiredPlaybackStatus', "PAUSED")
+    } else {
+      this.set('desiredPlaybackStatus', "PLAYING")
+    }
+  }
+
 });
 App.Video.reopenClass({
   createFromRawVideo: function(rawVideo){
@@ -230,6 +244,7 @@ App.Video.reopenClass({
 });
 
 App.VideoList = Ember.Object.extend({
+  //TODO: This sounds less and less like a model and more like a data adapter
   watchLaterId: null,
   numberOfVideos: 0,
   rawVideos: [],
@@ -259,13 +274,6 @@ App.VideoList = Ember.Object.extend({
       });
     }
   },
-
-  _selectVideo: function(){
-    this.get('videos').forEach(function(video){
-      video.set('isSelected', false);
-    });
-    this.set('selectedVideo.isSelected', true);
-  }.observes('selectedVideo')
 });
 
 App.YouTubeApi = Ember.Object.extend({
@@ -328,10 +336,91 @@ App.VideosRoute = Ember.Route.extend({
   model: function(){
     console.log("VideoSRoute");
     return this.modelFor('app');
+  },
+
+  actions: {
+    changeVideo: function(id){
+      this.transitionTo('video', id);
+    }
+  },
+
+  setupController: function (controller, model) {
+    this._super(controller,model);
+    Ember.Instrumentation.subscribe("globalKeys.keyPressed", {
+      before: function(name, timestamp, keyChar) {
+        controller.send('keyPressed', keyChar);
+      },
+      after: function() {}
+    });
   }
 });
 
+function Key(keyChar){
+  this.is = function(query){
+    if(query.length == 1){
+      return (keyChar == query.charCodeAt(0));
+    } else {
+      return (query === 'enter' && keyChar == 13) ||
+             (query === 'space' && keyChar == 32);
+    }
+  }
+}
+
 App.VideosController = Ember.ObjectController.extend({
+
+  displayedVideo: null,
+  selectedVideo: null,
+  selectedVideoIndex: -1,
+
+  actions: {
+    keyPressed: function(keyChar){
+      var key = new Key(keyChar);
+      if(key.is('j')){
+        this.selectNext();
+      } else if(key.is('k')) {
+        this.selectPrevious();
+      } else if(key.is('enter')) {
+        this.displayVideo();
+      } else if(key.is('space')) {
+        var displayedVideo = this.get('displayedVideo');
+        if(displayedVideo){
+          displayedVideo.togglePlayPause();
+        }
+      }
+    }
+  },
+
+  selectNext: function(){
+    var index = this.get('selectedVideoIndex');
+    var newIndex = Math.min(index+1, this.get('videos').length-1);
+    this.set('selectedVideoIndex', newIndex);
+  },
+
+  selectPrevious: function(){
+    var index = this.get('selectedVideoIndex');
+    var newIndex = Math.max(index-1, 0);
+    this.set('selectedVideoIndex', newIndex);
+  },
+
+  displayVideo: function(){
+    this.send('changeVideo', this.get('selectedVideo.id'));
+  },
+
+  _observeDisplayedVideo: function(){
+    this.get('videos').forEach(function(video){
+      video.set('isDisplayed', false);
+    });
+    this.set('displayedVideo.isDisplayed', true);
+  }.observes('displayedVideo'),
+
+  _observeSelectedVideo: function(){
+    var selectedVideo = this.get('videos')[this.get('selectedVideoIndex')];
+    this.set('selectedVideo', selectedVideo);
+    this.get('videos').forEach(function(video){
+      video.set('isSelected', false);
+    });
+    this.set('selectedVideo.isSelected', true);
+  }.observes('selectedVideoIndex')
 });
 
 App.VideoRoute = Ember.Route.extend({
@@ -343,8 +432,8 @@ App.VideoRoute = Ember.Route.extend({
 
 App.VideoController = Ember.ObjectController.extend({
   needs: 'videos',
-  _observeSelectedVideo: function(){
-    this.get('controllers.videos').model.set('selectedVideo', this.get('content'));
+  _observeDisplayedVideo: function(){
+    this.get('controllers.videos').set('displayedVideo', this.get('content'));
   }.observes('content'),
 });
 
@@ -359,11 +448,17 @@ App.VideoView = Ember.View.extend({
 
 // ====== Components ========= //
 App.VideosListEntryComponent = Ember.Component.extend({
+    isDisplayedCss: function(){
+      return this.get("video.isDisplayed") ?  "displayed" : "not-displayed"
+    }.property("video.isDisplayed"),
     isSelectedCss: function(){
       return this.get("video.isSelected") ?  "selected" : "not-selected"
     }.property("video.isSelected"),
-    isSelectedAndIsPlaying: function(){
-      if(this.get('video.isSelected')){
+    computedCss: function(){
+      return this.get("isSelectedCss") + " " + this.get("isDisplayedCss");
+    }.property("isSelectedCss","isDisplayedCss"),
+    isDisplayedAndIsPlaying: function(){
+      if(this.get('video.isDisplayed')){
         if (this.get('video.isPlaying') || this.get('video.isBuffering')){
           return "||" ;
         } else {
@@ -372,14 +467,14 @@ App.VideosListEntryComponent = Ember.Component.extend({
       } else {
         return "";
       }
-    }.property('video.isSelected', 'video.isPlaying'),
+    }.property('video.isDisplayed', 'video.isPlaying'),
     playedPercentage: function(){
-      if(this.get('video.isSelected')){
+      if(this.get('video.isDisplayed')){
         return this.get('video.playedPercentage') + "%";
       } else {
         return "";
       }
-    }.property('video.isSelected', 'video.playedPercentage'),
+    }.property('video.isDisplayed', 'video.playedPercentage'),
 });
 
 App.VideoPlayerComponent = Ember.Component.extend({
@@ -403,8 +498,10 @@ App.VideoPlayerComponent = Ember.Component.extend({
       });
 
       setInterval(function(){
-        _this.set('video.duration',player.getDuration());
-        _this.set('video.currentTime',player.getCurrentTime());
+        if(player && player.getDuration && player.getCurrentTime){
+          _this.set('video.duration',player.getDuration());
+          _this.set('video.currentTime',player.getCurrentTime());
+        }
       }, 500);
 
       player.setSize(_this.get('width'),_this.get('height'));
@@ -418,6 +515,15 @@ App.VideoPlayerComponent = Ember.Component.extend({
       window.onYouTubePlayerAPIReady = initializePlayer;
     }
   },
+
+  _observeDesiredPlaybackStatus: function(){
+    var newStatus = this.get('video.desiredPlaybackStatus')
+    if(newStatus === "PLAYING" ){
+      this.get('player').playVideo();
+    } else if(newStatus === "PAUSED" ) {
+      this.get('player').pauseVideo();
+    }
+  }.observes('video.desiredPlaybackStatus'),
 
   _setPlaybackStatus: function(){
     var newState = null;
@@ -457,8 +563,8 @@ App.VideoPlayerComponent = Ember.Component.extend({
     };
   }.observes('video.videoId'),
 
-  _markAsSelected: function(){
-    this.set('video.isSelected', true);
+  _markAsDisplayed: function(){
+    this.set('video.isDisplayed', true);
   }.observes('video.videoId'),
 
   _workaround: function(){

@@ -53,7 +53,7 @@ button {
   clear: both;
   border-right: 1px solid darkgray;
   padding-right: 1em;
-  width: 33%;
+  width: 32%;
 }
 
 #video {
@@ -61,6 +61,13 @@ button {
   width: 66%;
 }
 
+#videos li.displayed {
+  background-color: rgb(204,141,143);
+}
+
 #videos li.selected {
   background-color: darkgray;
+}
+#videos li.selected.displayed {
+  background-color: rgb(204,24,30);
 }
