@@ -25,6 +25,10 @@ button {
   font-family: Helvetica;
 }
 
+#videos {
+  overflow-y: scroll;
+  height: 500px;
+}
 #videos li {
   padding: 0.25em 1em;
   list-style: none;

@@ -438,6 +438,13 @@ App.VideoController = Ember.ObjectController.extend({
   }.observes('content'),
 });
 
+App.VideosView = Ember.View.extend({
+  didInsertElement: function(){
+    var newHeight = $(window).height() - $('header').outerHeight();
+    this.$('#videos').height(newHeight);
+  },
+});
+
 App.VideoView = Ember.View.extend({
   videoHeight: 500,
   videoWidth: 500,
