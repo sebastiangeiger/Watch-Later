@@ -1,3 +1,7 @@
-<h2 id='title'>Welcome to Ember.js</h2>
-
+<header>
+  <h1>Watch Later</h1>
+  {{#if fullyAuthorized}}
+    <button {{action 'deauthorize'}}>Revoke authorization</button>
+  {{/if}}
+</header>
 {{outlet}}
