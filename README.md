@@ -66,5 +66,5 @@ Specify what it takes to deploy your app.
   * [ ] Fullscreen mode
   * [ ] Submit to Chrome store
   * [ ] Break up application.js (maybe drop ember-cli in)
-    * [ ] Copy manifest.json and icons into /dist
+    * [x] Copy manifest.json and icons into /dist
     * [ ] Use hash routes
