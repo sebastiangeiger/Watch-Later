@@ -1,7 +1,7 @@
 import Ember from 'ember';
 
 export default Ember.Route.extend({
-  afterModel: function(model, transition){
+  afterModel: function(){
     var appModel = this.modelFor('application');
     if(appModel.get('fullyAuthorized')){
       this.transitionTo('videos');
@@ -24,7 +24,7 @@ export default Ember.Route.extend({
           _this.transitionTo('videos');
         },
         function(error) {
-          console.log(error)
+          console.log(error);
         });
     }
   }
