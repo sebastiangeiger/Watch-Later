@@ -9,7 +9,7 @@
   * [ ] The size of the video is not set properly when coming from /videos
   * [ ] Start playing the last watched video when opening the app (5 second countdown)
   * [ ] Mark videos as watched and ask to remove from playlist if either video ended or I am skipping with only 5% remaining
-  * [ ] Video list should scroll in place (even when using keyboard)
+  * [x] Video list should scroll in place (even when using keyboard)
   * [ ] Skip in video by 10s
   * [ ] Have an event history, let user undo actions (e.g. "played 'video#1' from 13:00 to 17:30", "marked 'video#2' as played")
   * [ ] Fullscreen mode

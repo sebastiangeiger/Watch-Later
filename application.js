@@ -13,6 +13,56 @@ window.App = Ember.Application.create({
 
 window.developer_wants_to_keep_his_sanity = true;
 
+function ScrollPositionStrategy(container, elements, selectedIndex){
+  // There are probably easier way of codifying this, but my goal was clarity
+
+  this.calculate = function(){
+    var scrollTop = 0;
+    if(container && elements && (selectedIndex>=0)){
+      scrollTop = this._topOfVisibleArea();
+      if(this._selectionProtrudesBottom()){
+        scrollTop = this._bottomOfSelected() - container.innerHeight();
+      }
+      if(this._selectionProtrudesTop()){
+        scrollTop = this._topOfSelected();
+      }
+    }
+    return scrollTop;
+  };
+
+  this._selectionProtrudesBottom = function(){
+    return this._bottomOfSelected() > this._bottomOfVisibleArea();
+  };
+
+  this._selectionProtrudesTop = function(){
+    return this._topOfSelected() < this._topOfVisibleArea();
+  };
+
+  this._topOfSelected = function(){
+    return this._upperBorderOf(selectedIndex);
+  };
+
+  this._bottomOfSelected = function(){
+    return this._upperBorderOf(selectedIndex + 1);
+  };
+
+  this._topOfVisibleArea = function(){
+    return container.scrollTop()
+  };
+
+  this._bottomOfVisibleArea = function(){
+    return container.scrollTop() + container.innerHeight();
+  };
+
+  this._upperBorderOf = function(i){
+    var before = elements.slice(0,i);
+    var heights = $.map(before, function(el){
+      return $(el).outerHeight();
+    });
+    return heights.reduce(function(a,b){ return a+b },0);
+  };
+}
+
 App.Router.map(function() {
   this.resource('app', { path: '/' }, function(){
     this.resource('videos', function(){
@@ -438,6 +488,20 @@ App.VideoController = Ember.ObjectController.extend({
   }.observes('content'),
 });
 
+App.VideosView = Ember.View.extend({
+  didInsertElement: function(){
+    var newHeight = $(window).height() - $('header').outerHeight();
+    this.$('#videos').height(newHeight);
+  },
+  _selectionObserver: function(){
+    var container = this.$("#videos");
+    var elements = this.$('#videos li');
+    var i = this.get('controller.selectedVideoIndex');
+    var scrollPosition = new ScrollPositionStrategy(container,elements,i);
+    $(container).scrollTop(scrollPosition.calculate());
+  }.observes('controller.selectedVideoIndex')
+});
+
 App.VideoView = Ember.View.extend({
   videoHeight: 500,
   videoWidth: 500,
@@ -475,7 +539,7 @@ App.VideosListEntryComponent = Ember.Component.extend({
       } else {
         return "";
       }
-    }.property('video.isDisplayed', 'video.playedPercentage'),
+    }.property('video.isDisplayed', 'video.playedPercentage')
 });
 
 App.VideoPlayerComponent = Ember.Component.extend({
